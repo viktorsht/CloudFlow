@@ -29,6 +29,16 @@
     "uploadSequenceToken" : "e3071e69-4f30-4bff-96b8-982c336eae9a",
     "storedBytes" : 4152
   },
+  "000000000000/us-east-1::/aws/rds/instance/ms3-db/error::2026/09/18/4ef1b838" : {
+    "logGroupName" : "/aws/rds/instance/ms3-db/error",
+    "logStreamName" : "2026/09/18/4ef1b838",
+    "createdTime" : 1789699042451,
+    "firstEventTimestamp" : 1789699042455,
+    "lastEventTimestamp" : 1789703542929,
+    "lastIngestionTime" : 1789703542929,
+    "uploadSequenceToken" : "ac3dc8bf-9553-4dd4-9100-1cc2ec33e1c4",
+    "storedBytes" : 2463
+  },
   "000000000000/us-east-1::/ecs/floci-bridge-port-probe::2026/09/18/gateway/d71e937f15c947b0b5e3b70c59dc2fe1" : {
     "logGroupName" : "/ecs/floci-bridge-port-probe",
     "logStreamName" : "2026/09/18/gateway/d71e937f15c947b0b5e3b70c59dc2fe1",
@@ -38,16 +48,6 @@
     "lastIngestionTime" : 1789698735224,
     "uploadSequenceToken" : "a7f6868d-9560-49db-8c76-10e4584135e6",
     "storedBytes" : 4153
-  },
-  "000000000000/us-east-1::/aws/rds/instance/ms3-db/error::2026/09/18/4ef1b838" : {
-    "logGroupName" : "/aws/rds/instance/ms3-db/error",
-    "logStreamName" : "2026/09/18/4ef1b838",
-    "createdTime" : 1789699042451,
-    "firstEventTimestamp" : 1789699042455,
-    "lastEventTimestamp" : 1789699342509,
-    "lastIngestionTime" : 1789699342509,
-    "uploadSequenceToken" : "16390fe7-b7eb-4ac6-bf83-6d06056237b9",
-    "storedBytes" : 1266
   },
   "000000000000/us-east-1::/aws/rds/instance/ms1-db/error::2026/09/18/da93098d" : {
     "logGroupName" : "/aws/rds/instance/ms1-db/error",
@@ -79,6 +79,26 @@
     "uploadSequenceToken" : "4305e4fa-57a6-42e7-84c2-bff4e71bcae4",
     "storedBytes" : 4564
   },
+  "000000000000/us-east-1::/ecs/microservices-demo::2026/09/18/ms2/5a66c15d1d58408489fc7349fac18cbc" : {
+    "logGroupName" : "/ecs/microservices-demo",
+    "logStreamName" : "2026/09/18/ms2/5a66c15d1d58408489fc7349fac18cbc",
+    "createdTime" : 1789704208547,
+    "firstEventTimestamp" : 1789704211306,
+    "lastEventTimestamp" : 1789704643377,
+    "lastIngestionTime" : 1789704643377,
+    "uploadSequenceToken" : "322b3521-a5fc-49b4-88f8-3b7707f8e02f",
+    "storedBytes" : 5729
+  },
+  "000000000000/us-east-1::/ecs/microservices-demo::2026/09/18/ms3/5a66c15d1d58408489fc7349fac18cbc" : {
+    "logGroupName" : "/ecs/microservices-demo",
+    "logStreamName" : "2026/09/18/ms3/5a66c15d1d58408489fc7349fac18cbc",
+    "createdTime" : 1789704209278,
+    "firstEventTimestamp" : 1789704211851,
+    "lastEventTimestamp" : 1789704366539,
+    "lastIngestionTime" : 1789704366539,
+    "uploadSequenceToken" : "a5cdfb8c-e844-46a8-acfe-80348471b126",
+    "storedBytes" : 5105
+  },
   "000000000000/us-east-1::/ecs/microservices-demo::2026/09/18/ms1/db65bf8b020548d4b3565c5799a5b930" : {
     "logGroupName" : "/ecs/microservices-demo",
     "logStreamName" : "2026/09/18/ms1/db65bf8b020548d4b3565c5799a5b930",
@@ -99,15 +119,25 @@
     "uploadSequenceToken" : "b7d7ff55-fe2a-4d8a-acb7-e85600b19e5e",
     "storedBytes" : 4627
   },
+  "000000000000/us-east-1::/aws/rds/instance/ms1-db/error::2026/09/18/62dd1bd3" : {
+    "logGroupName" : "/aws/rds/instance/ms1-db/error",
+    "logStreamName" : "2026/09/18/62dd1bd3",
+    "createdTime" : 1789704157363,
+    "firstEventTimestamp" : 1789704157367,
+    "lastEventTimestamp" : 1789704456726,
+    "lastIngestionTime" : 1789704456726,
+    "uploadSequenceToken" : "4e0abebb-87c7-49f5-85ac-7813db9ba9ad",
+    "storedBytes" : 2216
+  },
   "000000000000/us-east-1::/aws/rds/instance/ms2-db/error::2026/09/18/a130d0b9" : {
     "logGroupName" : "/aws/rds/instance/ms2-db/error",
     "logStreamName" : "2026/09/18/a130d0b9",
     "createdTime" : 1789699042167,
     "firstEventTimestamp" : 1789699042171,
-    "lastEventTimestamp" : 1789699341119,
-    "lastIngestionTime" : 1789699341119,
-    "uploadSequenceToken" : "23823b20-2449-498e-a5d3-81e096c12873",
-    "storedBytes" : 1367
+    "lastEventTimestamp" : 1789703541561,
+    "lastIngestionTime" : 1789703541561,
+    "uploadSequenceToken" : "729d0190-c78a-4765-86fd-2db557e714f8",
+    "storedBytes" : 2564
   },
   "000000000000/us-east-1::/ecs/floci-bridge-port-probe::2026/09/18/gateway/b738f791a89d48bdaded164917ca29e4" : {
     "logGroupName" : "/ecs/floci-bridge-port-probe",
@@ -118,6 +148,16 @@
     "lastIngestionTime" : 0,
     "uploadSequenceToken" : "d3d84ebc-f341-41b8-b94d-9fa73254e7ad",
     "storedBytes" : 0
+  },
+  "000000000000/us-east-1::/ecs/microservices-demo::2026/09/18/ms1/5a66c15d1d58408489fc7349fac18cbc" : {
+    "logGroupName" : "/ecs/microservices-demo",
+    "logStreamName" : "2026/09/18/ms1/5a66c15d1d58408489fc7349fac18cbc",
+    "createdTime" : 1789704207976,
+    "firstEventTimestamp" : 1789704210494,
+    "lastEventTimestamp" : 1789704222763,
+    "lastIngestionTime" : 1789704222763,
+    "uploadSequenceToken" : "36bd5c3f-16f8-4ca7-8245-f29a24088328",
+    "storedBytes" : 5105
   },
   "000000000000/us-east-1::/ecs/microservices-demo::2026/09/18/gateway/c858808bea3e4e0e899d9072545a9946" : {
     "logGroupName" : "/ecs/microservices-demo",
@@ -134,40 +174,50 @@
     "logStreamName" : "2026/09/18/ms1/b778f20de9334e758134b658784377fc",
     "createdTime" : 1789699053750,
     "firstEventTimestamp" : 1789699055967,
-    "lastEventTimestamp" : 1789699079638,
-    "lastIngestionTime" : 1789699079638,
-    "uploadSequenceToken" : "c2bf7fe2-28eb-4633-9adf-8f64debe6afe",
-    "storedBytes" : 6100
+    "lastEventTimestamp" : 1789704087144,
+    "lastIngestionTime" : 1789704087144,
+    "uploadSequenceToken" : "875341fa-4587-4b89-9acf-852ec016d0e8",
+    "storedBytes" : 6644
+  },
+  "000000000000/us-east-1::/aws/rds/instance/ms3-db/error::2026/09/18/bbdf43f3" : {
+    "logGroupName" : "/aws/rds/instance/ms3-db/error",
+    "logStreamName" : "2026/09/18/bbdf43f3",
+    "createdTime" : 1789704160397,
+    "firstEventTimestamp" : 1789704160400,
+    "lastEventTimestamp" : 1789704760127,
+    "lastIngestionTime" : 1789704760127,
+    "uploadSequenceToken" : "1930c95e-07fe-4dfa-9104-7bd2d07d0299",
+    "storedBytes" : 2615
   },
   "000000000000/us-east-1::/ecs/microservices-demo::2026/09/18/ms2/b778f20de9334e758134b658784377fc" : {
     "logGroupName" : "/ecs/microservices-demo",
     "logStreamName" : "2026/09/18/ms2/b778f20de9334e758134b658784377fc",
     "createdTime" : 1789699054341,
     "firstEventTimestamp" : 1789699056096,
-    "lastEventTimestamp" : 1789699082815,
-    "lastIngestionTime" : 1789699082815,
-    "uploadSequenceToken" : "7290ac57-9f50-4bc5-94fe-46eeffc54d68",
-    "storedBytes" : 5427
+    "lastEventTimestamp" : 1789704087670,
+    "lastIngestionTime" : 1789704087670,
+    "uploadSequenceToken" : "dec11f17-cf74-46d7-acb9-eac39bdac7d8",
+    "storedBytes" : 5980
   },
   "000000000000/us-east-1::/ecs/microservices-demo::2026/09/18/ms3/b778f20de9334e758134b658784377fc" : {
     "logGroupName" : "/ecs/microservices-demo",
     "logStreamName" : "2026/09/18/ms3/b778f20de9334e758134b658784377fc",
     "createdTime" : 1789699054962,
     "firstEventTimestamp" : 1789699056422,
-    "lastEventTimestamp" : 1789699333342,
-    "lastIngestionTime" : 1789699333342,
-    "uploadSequenceToken" : "b324acd8-cdd9-40f7-b0e1-5f279ea26821",
-    "storedBytes" : 5852
+    "lastEventTimestamp" : 1789704088150,
+    "lastIngestionTime" : 1789704088150,
+    "uploadSequenceToken" : "1d439182-9f13-4abf-904c-71af8b27f5cf",
+    "storedBytes" : 6396
   },
   "000000000000/us-east-1::/aws/rds/instance/ms1-db/error::2026/09/18/631d9403" : {
     "logGroupName" : "/aws/rds/instance/ms1-db/error",
     "logStreamName" : "2026/09/18/631d9403",
     "createdTime" : 1789699040747,
     "firstEventTimestamp" : 1789699040755,
-    "lastEventTimestamp" : 1789699640191,
-    "lastIngestionTime" : 1789699640191,
-    "uploadSequenceToken" : "efe1632e-6e96-4a3b-9bd8-9aa8f311ce29",
-    "storedBytes" : 1665
+    "lastEventTimestamp" : 1789702339813,
+    "lastIngestionTime" : 1789702339813,
+    "uploadSequenceToken" : "bf81ae45-1b1f-41f5-a6f0-96c3d116eca3",
+    "storedBytes" : 2064
   },
   "000000000000/us-east-1::/ecs/microservices-demo::2026/09/18/gateway/db65bf8b020548d4b3565c5799a5b930" : {
     "logGroupName" : "/ecs/microservices-demo",
@@ -238,5 +288,25 @@
     "lastIngestionTime" : 1789698910346,
     "uploadSequenceToken" : "ebe621f2-97a3-4892-9018-1afea655a8bb",
     "storedBytes" : 6923
+  },
+  "000000000000/us-east-1::/ecs/microservices-demo::2026/09/18/gateway/5a66c15d1d58408489fc7349fac18cbc" : {
+    "logGroupName" : "/ecs/microservices-demo",
+    "logStreamName" : "2026/09/18/gateway/5a66c15d1d58408489fc7349fac18cbc",
+    "createdTime" : 1789704207456,
+    "firstEventTimestamp" : 1789704210048,
+    "lastEventTimestamp" : 1789704423220,
+    "lastIngestionTime" : 1789704423220,
+    "uploadSequenceToken" : "fa3eb34b-1bd6-4782-9310-f8ec8a55c41f",
+    "storedBytes" : 47275
+  },
+  "000000000000/us-east-1::/aws/rds/instance/ms2-db/error::2026/09/18/b2c48a1b" : {
+    "logGroupName" : "/aws/rds/instance/ms2-db/error",
+    "logStreamName" : "2026/09/18/b2c48a1b",
+    "createdTime" : 1789704158906,
+    "firstEventTimestamp" : 1789704158910,
+    "lastEventTimestamp" : 1789704758026,
+    "lastIngestionTime" : 1789704758026,
+    "uploadSequenceToken" : "a370a404-6cd2-4ab4-a574-f73d4fa2ded0",
+    "storedBytes" : 2615
   }
 }

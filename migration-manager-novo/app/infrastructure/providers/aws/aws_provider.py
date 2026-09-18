@@ -10,6 +10,7 @@ from app.domain.contracts.cloud_provider import CloudProvider
 from app.domain.contracts.compute_provider import ComputeProvider
 from app.domain.models.deployment import Deployment, HealthCheckResult
 from app.domain.models.microservice import MicroserviceConfig
+from app.domain.models.migration import WorkloadReference
 from app.domain.models.provider import ProviderConfig
 
 
@@ -36,3 +37,12 @@ class AWSProvider(CloudProvider):
 
     def health_check(self, deployment: Deployment) -> HealthCheckResult:
         return self._compute_provider.health_check(deployment)
+
+    def discover_service(self, reference: WorkloadReference) -> Deployment:
+        return self._compute_provider.discover(reference)
+
+    def start_service(self, deployment: Deployment) -> None:
+        self._compute_provider.start(deployment)
+
+    def stop_service(self, deployment: Deployment) -> None:
+        self._compute_provider.stop(deployment)

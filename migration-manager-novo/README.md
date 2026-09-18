@@ -1,5 +1,33 @@
 # MigrationManager
 
+## Operação efetiva AWS ↔ Azure
+
+Esta versão migra um microsserviço PostgreSQL por vez entre ECS/RDS no Floci
+e Container Apps/Azure PostgreSQL no Floci-AZ. O Gateway Spring roda fora do
+workload migrado e é atualizado pelo actuator. O corte instala uma rota 503,
+executa `pg_dump`/`pg_restore`, confere tabelas e contagens, troca a rota e
+remove a manutenção. A origem é apenas parada e continua disponível para
+rollback; a exclusão definitiva exige `POST /migrations/{id}/finalize`.
+
+Antes de iniciar, exporte as credenciais por referência, sem colocá-las nos
+JSONs:
+
+```bash
+export SECRET_MS2_DATABASE_SOURCE_USER=ms2_user
+export SECRET_MS2_DATABASE_SOURCE_PASSWORD=ms2_pass
+export SECRET_MS2_DATABASE_TARGET_USER=ms2_user
+export SECRET_MS2_DATABASE_TARGET_PASSWORD=ms2_pass
+```
+
+Suba o ambiente com `docker compose up --build` dentro deste diretório. Para
+AWS → Azure, substitua `REPLACE_WITH_ECS_TASK_ARN` no exemplo pelo ARN de
+MS2 retornado pelo ECS. Os arquivos em `configs/` usam as imagens
+`microservices-demo/ms1`, `ms2` e `ms3`; MS2 chama MS3 pelo Gateway neutro.
+
+Para criar a origem AWS compatível com a migração seletiva, execute
+`bash scripts/bootstrap-aws-ms2-source.sh` após subir o Compose. O script
+cria MS2 e MS3 em tasks ECS separadas e imprime `MS2_TASK_ARN`.
+
 Orquestrador de **migração seletiva de microsserviços em ambientes multi-cloud**.
 
 O `MigrationManager` coordena todas as etapas necessárias para migrar um

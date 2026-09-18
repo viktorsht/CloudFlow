@@ -1,6 +1,8 @@
 """Contrato para provedores de redirecionamento de trafego (DNS, LB, gateway...)."""
 from abc import ABC, abstractmethod
 
+from app.domain.models.deployment import Deployment
+
 
 class TrafficProvider(ABC):
     """Abstrai o mecanismo de roteamento usado para direcionar requisicoes
@@ -25,3 +27,19 @@ class TrafficProvider(ABC):
     @abstractmethod
     def restore(self, service_id: str, previous_endpoint: str) -> None:
         """Restaura a rota anterior do servico (usado em rollback)."""
+
+    @abstractmethod
+    def enable_maintenance(self, service_id: str) -> None:
+        """Instala uma rota de maior prioridade que responde 503."""
+
+    @abstractmethod
+    def disable_maintenance(self, service_id: str) -> None:
+        """Remove a rota temporaria de manutencao."""
+
+    @abstractmethod
+    def redirect_deployment(self, service_id: str, deployment: Deployment) -> None:
+        """Redireciona preservando metadados de roteamento do deployment."""
+
+    @abstractmethod
+    def validate_public_application(self, service_id: str) -> bool:
+        """Executa a chamada publica do microsservico depois do corte."""

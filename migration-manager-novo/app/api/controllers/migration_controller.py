@@ -88,6 +88,17 @@ def rollback_migration(
     return manager.rollback(plan)
 
 
+@router.post("/{migration_id}/finalize", status_code=204)
+def finalize_source(
+    migration_id: str, manager: MigrationManager = Depends(get_manager)
+) -> None:
+    """Remove definitivamente a origem retida depois de validacao manual."""
+    try:
+        manager.finalize_source(_require_plan(migration_id))
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
 def _require_plan(migration_id: str):
     plan = _plans.get(migration_id)
     if plan is None:

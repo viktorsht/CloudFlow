@@ -41,5 +41,8 @@ management:
       exposure:
         include: health,info,gateway
   endpoint:
+    gateway:
+      # Necessario para o manager criar, remover e atualizar rotas durante o corte.
+      enabled: true
     health:
       show-details: never

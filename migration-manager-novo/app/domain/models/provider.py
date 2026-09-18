@@ -20,3 +20,10 @@ class ProviderConfig(BaseModel):
         default=None,
         description="Referencia a um segredo externo (nunca a credencial em si).",
     )
+    runtime_options: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Parametros neutros de runtime. Exemplos: cluster/task_arn para ECS; "
+            "subscription_id/resource_group/managed_environment para Azure."
+        ),
+    )

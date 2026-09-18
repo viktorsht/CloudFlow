@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 from app.domain.models.deployment import Deployment, HealthCheckResult
 from app.domain.models.microservice import ContainerConfig
+from app.domain.models.migration import WorkloadReference
 
 
 class ComputeProvider(ABC):
@@ -35,3 +36,7 @@ class ComputeProvider(ABC):
     @abstractmethod
     def health_check(self, deployment: Deployment) -> HealthCheckResult:
         """Executa uma verificacao de saude sobre o deployment."""
+
+    @abstractmethod
+    def discover(self, reference: WorkloadReference) -> Deployment:
+        """Resolve um workload que foi criado antes desta execucao."""

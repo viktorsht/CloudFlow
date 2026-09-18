@@ -12,6 +12,7 @@ class MigrationState(str, Enum):
     TARGET_DEPLOYED = "target_deployed"
     VALIDATING_TARGET = "validating_target"
     TARGET_VALID = "target_valid"
+    QUIESCING_SOURCE = "quiescing_source"
     REDIRECTING_TRAFFIC = "redirecting_traffic"
     TRAFFIC_REDIRECTED = "traffic_redirected"
     VALIDATING_APPLICATION = "validating_application"
@@ -29,12 +30,16 @@ _HAPPY_PATH: list[tuple[MigrationState, MigrationState]] = [
     (MigrationState.PENDING, MigrationState.PREPARING),
     (MigrationState.PREPARING, MigrationState.PREPARED),
     (MigrationState.PREPARED, MigrationState.MIGRATING_DATA),
+    (MigrationState.PREPARED, MigrationState.DEPLOYING_TARGET),
     (MigrationState.MIGRATING_DATA, MigrationState.DATA_MIGRATED),
     (MigrationState.DATA_MIGRATED, MigrationState.DEPLOYING_TARGET),
     (MigrationState.DEPLOYING_TARGET, MigrationState.TARGET_DEPLOYED),
     (MigrationState.TARGET_DEPLOYED, MigrationState.VALIDATING_TARGET),
     (MigrationState.VALIDATING_TARGET, MigrationState.TARGET_VALID),
     (MigrationState.TARGET_VALID, MigrationState.REDIRECTING_TRAFFIC),
+    (MigrationState.TARGET_VALID, MigrationState.QUIESCING_SOURCE),
+    (MigrationState.QUIESCING_SOURCE, MigrationState.MIGRATING_DATA),
+    (MigrationState.DATA_MIGRATED, MigrationState.REDIRECTING_TRAFFIC),
     (MigrationState.REDIRECTING_TRAFFIC, MigrationState.TRAFFIC_REDIRECTED),
     (MigrationState.TRAFFIC_REDIRECTED, MigrationState.VALIDATING_APPLICATION),
     (MigrationState.VALIDATING_APPLICATION, MigrationState.MIGRATION_COMPLETED),
@@ -48,6 +53,7 @@ _FAILABLE_STATES: list[MigrationState] = [
     MigrationState.MIGRATING_DATA,
     MigrationState.DEPLOYING_TARGET,
     MigrationState.VALIDATING_TARGET,
+    MigrationState.QUIESCING_SOURCE,
     MigrationState.REDIRECTING_TRAFFIC,
     MigrationState.VALIDATING_APPLICATION,
     MigrationState.SOURCE_CLEANUP,

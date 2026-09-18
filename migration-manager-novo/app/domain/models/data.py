@@ -16,6 +16,10 @@ class DataEndpointConfig(BaseModel):
         default=None,
         description="Referencia a um segredo externo, nunca a credencial em si.",
     )
+    resource_id: str | None = Field(
+        default=None,
+        description="Identificador do recurso gerenciado (RDS ou Flexible Server).",
+    )
 
 
 # Aliases semanticos pedidos no prompt (DataSourceConfig / DataTargetConfig)

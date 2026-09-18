@@ -68,12 +68,16 @@ class MigrationManager:
         source_bundle = self._build_provider_bundle(request.source.provider, request.source)
         target_bundle = self._build_provider_bundle(request.target.provider, request.target)
         data_provider = self._provider_factory.create_data_provider(request.data.type)
+        if request.ingress is None:
+            raise ValueError("ingress e obrigatorio para migracao efetiva via Gateway")
+        traffic_provider = self._provider_factory.create_traffic_provider(request.ingress)
 
         context = MigrationContext(
             request=request,
             source=source_bundle,
             target=target_bundle,
             data_provider=data_provider,
+            traffic_provider=traffic_provider,
             dependency_graph=graph,
             current_state=MigrationState.PENDING,
         )
@@ -106,11 +110,11 @@ class MigrationManager:
             )
             checks["target_service"] = service_result.success
 
-        data_cfg = context.request.data
-        data_result = context.target.validation_provider.validate_data(
-            data_cfg.source, data_cfg.target
-        )
-        checks["data"] = data_result.success
+        if context.source_database and context.target_database:
+            data_result = context.data_provider.validate_connections(
+                context.source_database, context.target_database
+            )
+            checks["data"] = data_result.success
 
         overall_success = all(checks.values()) if checks else False
         return ValidationResult(
@@ -134,12 +138,26 @@ class MigrationManager:
 
         try:
             if context.original_route:
-                context.source.traffic_provider.restore(service_id, context.original_route)
-                restored_route = context.source.traffic_provider.validate_route(
+                context.traffic_provider.restore(service_id, context.original_route)
+                restored_route = context.traffic_provider.validate_route(
                     service_id, context.original_route
                 )
         except Exception as exc:  # noqa: BLE001
             message_parts.append(f"Falha ao restaurar trafego: {exc}")
+
+        try:
+            if context.maintenance_enabled:
+                context.traffic_provider.disable_maintenance(service_id)
+                context.maintenance_enabled = False
+        except Exception as exc:  # noqa: BLE001
+            message_parts.append(f"Falha ao retirar manutencao: {exc}")
+
+        try:
+            if context.source_was_stopped and context.source_deployment is not None:
+                context.source.cloud_provider.start_service(context.source_deployment)
+                context.source_was_stopped = False
+        except Exception as exc:  # noqa: BLE001
+            message_parts.append(f"Falha ao reativar origem: {exc}")
 
         try:
             if context.target_deployment is not None:
@@ -150,6 +168,8 @@ class MigrationManager:
 
         try:
             context.data_provider.rollback(context.request.data.target)
+            if context.target_database is not None:
+                context.target.database_provider.remove(context.target_database)
         except Exception as exc:  # noqa: BLE001
             message_parts.append(f"Falha ao reverter migracao de dados: {exc}")
 
@@ -177,13 +197,23 @@ class MigrationManager:
 
     # -- internos ---------------------------------------------------------
 
+    def finalize_source(self, plan: MigrationPlan) -> None:
+        """Limpeza destrutiva explicita, permitida somente apos conclusao."""
+        context = self._get_context(plan.migration_id)
+        if context.current_state is not MigrationState.COMPLETED:
+            raise RuntimeError("A origem so pode ser removida depois de uma migracao concluida")
+        if context.source_deployment:
+            context.source.cloud_provider.remove_service(context.source_deployment)
+        if context.source_database:
+            context.source.database_provider.remove(context.source_database)
+
     def _build_provider_bundle(self, provider_type, provider_config) -> ProviderBundle:
         cloud_provider = self._provider_factory.create_cloud_provider(provider_config)
-        traffic_provider = self._provider_factory.create_traffic_provider(provider_config)
+        database_provider = self._provider_factory.create_database_provider(provider_config)
         validation_provider = self._provider_factory.create_validation_provider(provider_config)
         return ProviderBundle(
             cloud_provider=cloud_provider,
-            traffic_provider=traffic_provider,
+            database_provider=database_provider,
             validation_provider=validation_provider,
         )
 

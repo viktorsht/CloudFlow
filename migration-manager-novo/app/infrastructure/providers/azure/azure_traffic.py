@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from app.domain.contracts.traffic_provider import TrafficProvider
 from app.domain.models.provider import ProviderConfig
+from app.domain.models.deployment import Deployment
 
 
 class AzureTrafficProvider(TrafficProvider):
@@ -29,3 +30,15 @@ class AzureTrafficProvider(TrafficProvider):
 
     def restore(self, service_id: str, previous_endpoint: str) -> None:
         self._routes[service_id] = previous_endpoint
+
+    def enable_maintenance(self, service_id: str) -> None:
+        return None
+
+    def disable_maintenance(self, service_id: str) -> None:
+        return None
+
+    def redirect_deployment(self, service_id: str, deployment: Deployment) -> None:
+        self.redirect(service_id, deployment.endpoint or "")
+
+    def validate_public_application(self, service_id: str) -> bool:
+        return True

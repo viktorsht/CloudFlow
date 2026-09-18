@@ -5,10 +5,12 @@ from dataclasses import dataclass, field
 
 from app.domain.contracts.cloud_provider import CloudProvider
 from app.domain.contracts.data_migration_provider import DataMigrationProvider
+from app.domain.contracts.database_provider import DatabaseProvider
 from app.domain.contracts.traffic_provider import TrafficProvider
 from app.domain.contracts.validation_provider import ValidationProvider
 from app.domain.enums.migration_state import MigrationState
 from app.domain.models.data import DataMigrationResult
+from app.domain.models.database import DatabaseConnection
 from app.domain.models.dependency import DependencyGraph
 from app.domain.models.deployment import Deployment
 from app.domain.models.migration import MigrationEvent, MigrationRequest
@@ -21,7 +23,7 @@ class ProviderBundle:
     """
 
     cloud_provider: CloudProvider
-    traffic_provider: TrafficProvider
+    database_provider: DatabaseProvider
     validation_provider: ValidationProvider
 
 
@@ -36,13 +38,18 @@ class MigrationContext:
     source: ProviderBundle
     target: ProviderBundle
     data_provider: DataMigrationProvider
+    traffic_provider: TrafficProvider
     dependency_graph: DependencyGraph
 
     current_state: MigrationState = MigrationState.PENDING
     source_deployment: Deployment | None = None
     target_deployment: Deployment | None = None
+    source_database: DatabaseConnection | None = None
+    target_database: DatabaseConnection | None = None
     data_migration_result: DataMigrationResult | None = None
     original_route: str | None = None
+    maintenance_enabled: bool = False
+    source_was_stopped: bool = False
     events: list[MigrationEvent] = field(default_factory=list)
 
     @property

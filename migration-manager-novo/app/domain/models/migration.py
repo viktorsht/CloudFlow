@@ -12,6 +12,26 @@ from app.domain.models.microservice import MicroserviceConfig
 from app.domain.models.provider import ProviderConfig
 
 
+class WorkloadReference(BaseModel):
+    """Referencia suficiente para encontrar e controlar o workload de origem."""
+
+    resource_id: str = Field(..., min_length=1)
+    container_name: str | None = None
+    port: int | None = Field(default=None, gt=0, lt=65536)
+    container_only: bool = Field(
+        default=False,
+        description="Controla apenas o container quando a task ECS legada agrupa servicos.",
+    )
+
+
+class IngressConfig(BaseModel):
+    """Configuracao da rota publica administrada pelo Spring Gateway neutro."""
+
+    gateway_admin_url: str = Field(..., min_length=1)
+    route_id: str = Field(..., min_length=1)
+    public_path: str = Field(..., min_length=1)
+
+
 class MigrationRequest(BaseModel):
     """Especificacao completa de uma migracao, recebida pela API.
 
@@ -24,6 +44,8 @@ class MigrationRequest(BaseModel):
     source: ProviderConfig
     target: ProviderConfig
     data: DataMigrationConfig
+    source_workload: WorkloadReference | None = None
+    ingress: IngressConfig | None = None
 
 
 class MigrationEvent(BaseModel):

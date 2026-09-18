@@ -1,6 +1,8 @@
 """Implementacao inicial (stub) de ValidationProvider para AWS/Floci."""
 from __future__ import annotations
 
+import httpx
+
 from app.domain.contracts.validation_provider import ValidationProvider
 from app.domain.models.data import DataSourceConfig, DataTargetConfig, ValidationResult
 from app.domain.models.dependency import DependencyGraph
@@ -17,7 +19,11 @@ class AWSValidationProvider(ValidationProvider):
         self._config = config
 
     def validate_service(self, deployment: Deployment) -> ValidationResult:
-        is_deployed = deployment is not None and bool(deployment.endpoint)
+        try:
+            response = httpx.get(f"{(deployment.endpoint or '').rstrip('/')}{deployment.metadata.get('health_path', '/health')}", timeout=5)
+            is_deployed = response.is_success
+        except httpx.HTTPError:
+            is_deployed = False
         return ValidationResult(
             success=is_deployed,
             checks={
@@ -25,7 +31,7 @@ class AWSValidationProvider(ValidationProvider):
                 "endpoint_available": is_deployed,
                 "health_check": is_deployed,
             },
-            message="Validacao de servico (stub)",
+            message="Validacao HTTP do servico AWS",
         )
 
     def validate_data(

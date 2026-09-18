@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 from app.domain.models.deployment import Deployment, HealthCheckResult
 from app.domain.models.microservice import MicroserviceConfig
+from app.domain.models.migration import WorkloadReference
 
 
 class CloudProvider(ABC):
@@ -29,3 +30,15 @@ class CloudProvider(ABC):
     @abstractmethod
     def health_check(self, deployment: Deployment) -> HealthCheckResult:
         """Verifica a saude do servico implantado."""
+
+    @abstractmethod
+    def discover_service(self, reference: WorkloadReference) -> Deployment:
+        """Encontra um workload existente para migracao/rollback."""
+
+    @abstractmethod
+    def start_service(self, deployment: Deployment) -> None:
+        """Reativa um workload previamente parado."""
+
+    @abstractmethod
+    def stop_service(self, deployment: Deployment) -> None:
+        """Para um workload sem remove-lo, preservando rollback explicito."""
