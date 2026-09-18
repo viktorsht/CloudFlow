@@ -184,10 +184,10 @@
     "logStreamName" : "2026/09/18/bbdf43f3",
     "createdTime" : 1789704160397,
     "firstEventTimestamp" : 1789704160400,
-    "lastEventTimestamp" : 1789704760127,
-    "lastIngestionTime" : 1789704760127,
-    "uploadSequenceToken" : "1930c95e-07fe-4dfa-9104-7bd2d07d0299",
-    "storedBytes" : 2615
+    "lastEventTimestamp" : 1789705059468,
+    "lastIngestionTime" : 1789705059468,
+    "uploadSequenceToken" : "c0d7d3d5-b864-4003-aa59-303025cb7e12",
+    "storedBytes" : 3014
   },
   "000000000000/us-east-1::/ecs/microservices-demo::2026/09/18/ms2/b778f20de9334e758134b658784377fc" : {
     "logGroupName" : "/ecs/microservices-demo",
@@ -304,9 +304,9 @@
     "logStreamName" : "2026/09/18/b2c48a1b",
     "createdTime" : 1789704158906,
     "firstEventTimestamp" : 1789704158910,
-    "lastEventTimestamp" : 1789704758026,
-    "lastIngestionTime" : 1789704758026,
-    "uploadSequenceToken" : "a370a404-6cd2-4ab4-a574-f73d4fa2ded0",
-    "storedBytes" : 2615
+    "lastEventTimestamp" : 1789705057346,
+    "lastIngestionTime" : 1789705057346,
+    "uploadSequenceToken" : "fb814dbd-b048-4938-82f8-4bb2482890d2",
+    "storedBytes" : 3014
   }
 }

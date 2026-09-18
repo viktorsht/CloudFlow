@@ -2757,6 +2757,13 @@
     "ingestionTime" : 1789704643377,
     "sequence" : 1151
   },
+  "000000000000/us-east-1::/aws/rds/instance/ms2-db/error::2026/09/18/b2c48a1b::001789705057127::40519348-dffc-4fbb-a81f-7b7a8e23f541" : {
+    "eventId" : "40519348-dffc-4fbb-a81f-7b7a8e23f541",
+    "timestamp" : 1789705057127,
+    "message" : "2026-09-18 04:17:37.120 UTC [33] LOG:  checkpoint starting: time",
+    "ingestionTime" : 1789705057128,
+    "sequence" : 1156
+  },
   "000000000000/us-east-1::/aws/rds/instance/ms3-db/error::2026/09/18/250e7ae4::001789698479885::f79c5366-6166-4640-81aa-f81cbb50b888" : {
     "eventId" : "f79c5366-6166-4640-81aa-f81cbb50b888",
     "timestamp" : 1789698479885,
@@ -3029,6 +3036,13 @@
     "message" : "\t\tat reactor.core.publisher.MonoIgnoreThen.subscribe(MonoIgnoreThen.java:51) ~[reactor-core-3.6.10.jar!/:3.6.10]",
     "ingestionTime" : 1789704360065,
     "sequence" : 971
+  },
+  "000000000000/us-east-1::/aws/rds/instance/ms2-db/error::2026/09/18/b2c48a1b::001789705057346::795e4088-2b52-45ee-aede-afc4c686715a" : {
+    "eventId" : "795e4088-2b52-45ee-aede-afc4c686715a",
+    "timestamp" : 1789705057346,
+    "message" : "2026-09-18 04:17:37.344 UTC [33] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.213 s, sync=0.003 s, total=0.225 s; sync files=3, longest=0.002 s, average=0.001 s; distance=3 kB, estimate=3 kB; lsn=0/1987620, redo lsn=0/19875E8",
+    "ingestionTime" : 1789705057346,
+    "sequence" : 1157
   },
   "000000000000/us-east-1::/aws/rds/instance/ms1-db/error::2026/09/18/62dd1bd3::001789704157367::8e29d406-13f2-4920-a7c3-f638991fcea3" : {
     "eventId" : "8e29d406-13f2-4920-a7c3-f638991fcea3",
@@ -3932,6 +3946,13 @@
     "message" : "\t\tat reactor.netty.http.server.HttpServerOperations.handleDefaultHttpRequest(HttpServerOperations.java:829) ~[reactor-netty-http-1.1.22.jar!/:1.1.22]",
     "ingestionTime" : 1789704360065,
     "sequence" : 977
+  },
+  "000000000000/us-east-1::/aws/rds/instance/ms3-db/error::2026/09/18/bbdf43f3::001789705059250::e37fc5bf-78ff-4817-9e28-b6b74ee0275b" : {
+    "eventId" : "e37fc5bf-78ff-4817-9e28-b6b74ee0275b",
+    "timestamp" : 1789705059250,
+    "message" : "2026-09-18 04:17:39.240 UTC [32] LOG:  checkpoint starting: time",
+    "ingestionTime" : 1789705059250,
+    "sequence" : 1158
   },
   "000000000000/us-east-1::/ecs/microservices-demo::2026/09/18/gateway/5a66c15d1d58408489fc7349fac18cbc::001789704360082::4cf39fd3-17a0-4c48-a073-00738efab19f" : {
     "eventId" : "4cf39fd3-17a0-4c48-a073-00738efab19f",
@@ -5752,6 +5773,13 @@
     "message" : "  '  |____| .__|_| |_|_| |_\\__, | / / / /",
     "ingestionTime" : 1789699056096,
     "sequence" : 539
+  },
+  "000000000000/us-east-1::/aws/rds/instance/ms3-db/error::2026/09/18/bbdf43f3::001789705059468::9cd10558-8bb0-4734-b153-efe9372220fa" : {
+    "eventId" : "9cd10558-8bb0-4734-b153-efe9372220fa",
+    "timestamp" : 1789705059468,
+    "message" : "2026-09-18 04:17:39.465 UTC [32] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.207 s, sync=0.004 s, total=0.225 s; sync files=3, longest=0.003 s, average=0.002 s; distance=6 kB, estimate=6 kB; lsn=0/1987AE0, redo lsn=0/1987AA8",
+    "ingestionTime" : 1789705059468,
+    "sequence" : 1159
   },
   "000000000000/us-east-1::/ecs/microservices-demo::2026/09/18/ms3/5a66c15d1d58408489fc7349fac18cbc::001789704216340::010d5a20-3968-4eea-b1c0-832131cc7b5d" : {
     "eventId" : "010d5a20-3968-4eea-b1c0-832131cc7b5d",
