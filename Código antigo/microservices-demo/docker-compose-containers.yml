@@ -1,0 +1,151 @@
+services:
+
+  postgres-ms1:
+    image: postgres:16-alpine
+    container_name: postgres-ms1
+    environment:
+      POSTGRES_DB: ms1_db
+      POSTGRES_USER: ms1_user
+      POSTGRES_PASSWORD: ms1_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata-ms1:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ms1_user -d ms1_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - demo-net
+
+  postgres-ms2:
+    image: postgres:16-alpine
+    container_name: postgres-ms2
+    environment:
+      POSTGRES_DB: ms2_db
+      POSTGRES_USER: ms2_user
+      POSTGRES_PASSWORD: ms2_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata-ms2:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ms2_user -d ms2_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - demo-net
+
+  postgres-ms3:
+    image: postgres:16-alpine
+    container_name: postgres-ms3
+    environment:
+      POSTGRES_DB: ms3_db
+      POSTGRES_USER: ms3_user
+      POSTGRES_PASSWORD: ms3_pass
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata-ms3:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ms3_user -d ms3_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - demo-net
+
+  ms1:
+    build: ./ms1-simple
+    container_name: ms1-simple
+    ports:
+      - "8081:8081"
+    environment:
+      DB_HOST: postgres-ms1
+      DB_PORT: 5432
+      DB_NAME: ms1_db
+      DB_USER: ms1_user
+      DB_PASSWORD: ms1_pass
+      # Este valor e o "seletor de provedor": ao migrar para AWS/Azure/GCP
+      # via Floci, basta trocar essa variavel (ex: aws, azure, gcp).
+      APP_PROVIDER: local
+      APP_MS_NAME: ms1
+    depends_on:
+      postgres-ms1:
+        condition: service_healthy
+    networks:
+      - demo-net
+
+  ms3:
+    build: ./ms3-simple
+    container_name: ms3-simple
+    ports:
+      - "8083:8083"
+    environment:
+      DB_HOST: postgres-ms3
+      DB_PORT: 5432
+      DB_NAME: ms3_db
+      DB_USER: ms3_user
+      DB_PASSWORD: ms3_pass
+      APP_PROVIDER: local
+      APP_MS_NAME: ms3
+    depends_on:
+      postgres-ms3:
+        condition: service_healthy
+    networks:
+      - demo-net
+
+  ms2:
+    build: ./ms2-composite
+    container_name: ms2-composite
+    ports:
+      - "8082:8082"
+    environment:
+      DB_HOST: postgres-ms2
+      DB_PORT: 5432
+      DB_NAME: ms2_db
+      DB_USER: ms2_user
+      DB_PASSWORD: ms2_pass
+      APP_PROVIDER: local
+      APP_MS_NAME: ms2
+      # MS2 chama o MS3 ATRAVES do gateway (rota /ms3/**), nao mais direto
+      # no container do ms3. Isso desacopla o MS2 de onde o MS3 esta.
+      MS3_URL: http://gateway:8080/ms3/api/process
+    depends_on:
+      postgres-ms2:
+        condition: service_healthy
+      # Nao depende do gateway aqui de proposito: como o gateway tambem
+      # depende de ms2 (para rotear /ms2/**), isso criaria uma dependencia
+      # circular no compose. Como as chamadas so acontecem quando uma
+      # requisicao chega (nao no boot), isso e seguro em dev. Em producao,
+      # o ideal e ter retry/backoff (ex: Spring Retry) no client HTTP do MS2.
+    networks:
+      - demo-net
+
+  gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      MS1_URI: http://ms1:8081
+      MS2_URI: http://ms2:8082
+      MS3_URI: http://ms3:8083
+    depends_on:
+      - ms1
+      - ms2
+      - ms3
+    networks:
+      - demo-net
+
+networks:
+  demo-net:
+    driver: bridge
+
+volumes:
+  pgdata-ms1:
+  pgdata-ms2:
+  pgdata-ms3:
+

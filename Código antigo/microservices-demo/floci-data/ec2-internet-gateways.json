@@ -1,0 +1,12 @@
+{
+  "000000000000/us-east-1::igw-default" : {
+    "internetGatewayId" : "igw-default",
+    "ownerId" : "000000000000",
+    "region" : "us-east-1",
+    "attachments" : [ {
+      "vpcId" : "vpc-default-us-east-1",
+      "state" : "available"
+    } ],
+    "tags" : [ ]
+  }
+}

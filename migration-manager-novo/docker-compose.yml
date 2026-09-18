@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  migration-manager:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - AWS_ENDPOINT_URL=http://floci:4566
+      - AZURE_ENDPOINT_URL=http://floci-az:4577
+    depends_on:
+      - floci
+      - floci-az
+
+  # Emulador local de servicos AWS usado durante o desenvolvimento.
+  floci:
+    image: floci/floci:latest
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=ecs,rds,elbv2
+
+  # Emulador local de servicos Azure usado durante o desenvolvimento
+  # (mesma familia do Floci, usada para o provedor Azure).
+  floci-az:
+    image: floci/floci-az:latest
+    ports:
+      - "4577:4577"

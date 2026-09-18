@@ -1,0 +1,17 @@
+{
+  "000000000000/us-east-1::sgr-0dbad9991ace1a618" : {
+    "securityGroupRuleId" : "sgr-0dbad9991ace1a618",
+    "groupId" : "sg-default-us-east-1",
+    "groupOwnerId" : "000000000000",
+    "ipProtocol" : "-1",
+    "fromPort" : null,
+    "toPort" : null,
+    "cidrIpv4" : "0.0.0.0/0",
+    "cidrIpv6" : null,
+    "prefixListId" : null,
+    "referencedGroupInfo" : null,
+    "description" : null,
+    "tags" : [ ],
+    "egress" : true
+  }
+}

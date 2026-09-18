@@ -1,0 +1,36 @@
+{
+  "000000000000/us-east-1::rtb-default" : {
+    "routeTableId" : "rtb-default",
+    "vpcId" : "vpc-default-us-east-1",
+    "ownerId" : "000000000000",
+    "region" : "us-east-1",
+    "routes" : [ {
+      "destinationCidrBlock" : "172.31.0.0/16",
+      "destinationIpv6CidrBlock" : null,
+      "destinationPrefixListId" : null,
+      "gatewayId" : "local",
+      "natGatewayId" : null,
+      "egressOnlyInternetGatewayId" : null,
+      "state" : "active",
+      "origin" : "CreateRouteTable"
+    }, {
+      "destinationCidrBlock" : "0.0.0.0/0",
+      "destinationIpv6CidrBlock" : null,
+      "destinationPrefixListId" : null,
+      "gatewayId" : "igw-default",
+      "natGatewayId" : null,
+      "egressOnlyInternetGatewayId" : null,
+      "state" : "active",
+      "origin" : "CreateRoute"
+    } ],
+    "associations" : [ {
+      "routeTableAssociationId" : "rtbassoc-default",
+      "routeTableId" : "rtb-default",
+      "subnetId" : null,
+      "gatewayId" : null,
+      "main" : true,
+      "associationState" : "associated"
+    } ],
+    "tags" : [ ]
+  }
+}

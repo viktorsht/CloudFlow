@@ -1,0 +1,54 @@
+{
+  "migration_id": "migration-ms2-azure-to-aws-001",
+  "microservice": {
+    "id": "ms2",
+    "name": "ms2-composite",
+    "container": {
+      "image": "ms2-composite:1.0.0",
+      "port": 8082,
+      "environment": {
+        "APP_PROVIDER": "aws",
+        "APP_MS_NAME": "ms2"
+      }
+    },
+    "health_check": {
+      "path": "/health",
+      "port": 8082
+    },
+    "dependencies": [
+      {
+        "service_id": "ms3",
+        "protocol": "http",
+        "port": 8083,
+        "required": true
+      }
+    ]
+  },
+  "source": {
+    "provider": "azure",
+    "region": "eastus",
+    "environment": "source",
+    "credentials_ref": "secret/ms2/source"
+  },
+  "target": {
+    "provider": "aws",
+    "region": "us-east-1",
+    "environment": "target",
+    "credentials_ref": "secret/ms2/target"
+  },
+  "data": {
+    "type": "postgresql",
+    "source": {
+      "host": "source-db",
+      "port": 5432,
+      "database": "ms2_db",
+      "credentials_ref": "secret/ms2/database/source"
+    },
+    "target": {
+      "host": "postgres-ms2",
+      "port": 5432,
+      "database": "ms2_db",
+      "credentials_ref": "secret/ms2/database/target"
+    }
+  }
+}

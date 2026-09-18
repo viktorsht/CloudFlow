@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.floci.demo</groupId>
+    <artifactId>microservices-demo-parent</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <name>microservices-demo</name>
+    <description>
+        Sistema de exemplo com API Gateway + 3 microsservicos (Spring Boot),
+        pensado para depois ser testado em multiplos provedores de nuvem
+        (AWS / Azure / GCP) via Floci.
+    </description>
+
+    <modules>
+        <module>ms1-simple</module>
+        <module>ms3-simple</module>
+        <module>ms2-composite</module>
+        <module>api-gateway</module>
+    </modules>
+</project>

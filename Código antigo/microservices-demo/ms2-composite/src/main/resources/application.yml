@@ -1,0 +1,39 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: ms2-composite
+  datasource:
+    # Cada microsservico tem seu PROPRIO banco PostgreSQL (database per
+    # service) - nao ha compartilhamento de schema/tabela entre MS1, MS2 e MS3.
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ms2_db}
+    username: ${DB_USER:ms2_user}
+    password: ${DB_PASSWORD:ms2_pass}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+app:
+  provider: ${APP_PROVIDER:local}
+  ms-name: ${APP_MS_NAME:ms2}
+  # MS2 chama o MS3 ATRAVES do API Gateway (nao mais direto ao container do MS3).
+  # Vantagem: MS2 nao precisa saber onde/como o MS3 esta hospedado - se o MS3
+  # for trocado de provedor, reescrito, escalado, etc, MS2 continua chamando
+  # o mesmo endereco do gateway. Tambem facilita adicionar novos MS no futuro
+  # sem alterar codigo de quem os consome.
+  ms3-url: ${MS3_URL:http://localhost:8080/ms3/api/process}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never

@@ -1,0 +1,1646 @@
+# Prompt — Criação do MigrationManager (Orquestrador de Microsserviços Multi-Cloud)
+
+## 1. Contexto
+
+Estou desenvolvendo um **MigrationManager**, um orquestrador responsável por realizar a migração seletiva de um microsserviço pertencente a uma aplicação distribuída em um ambiente **multi-cloud**.
+
+O sistema deve ser desenvolvido em **Python**, utilizando uma arquitetura modular, orientada a interfaces/contratos e com baixo acoplamento entre a lógica de migração e os provedores de nuvem.
+
+O objetivo é permitir que um microsserviço seja migrado de um provedor de nuvem de origem para um provedor de nuvem de destino, incluindo:
+
+1. infraestrutura necessária para executar o microsserviço;
+2. implantação do microsserviço no destino;
+3. migração dos dados associados ao microsserviço;
+4. validação da implantação;
+5. validação dos dados;
+6. alteração do direcionamento das requisições para o novo serviço;
+7. encerramento do serviço de origem após confirmação de sucesso;
+8. rollback em caso de falha.
+
+O projeto inicialmente será executado em um ambiente local utilizando **Floci para emulação de serviços AWS**, porém o MigrationManager **não deve ser acoplado ao Floci ou à AWS**.
+
+Posteriormente deverão ser adicionados outros provedores.
+
+---
+
+# 2. Objetivo principal
+
+Criar a base de um **MigrationManager (Orquestrador de Microsserviços em Multi-Cloud)** capaz de receber uma especificação completa de migração e coordenar todas as etapas necessárias para migrar um microsserviço de um provedor para outro.
+
+O sistema deve utilizar **abstrações para todas as operações dependentes de infraestrutura ou provedor**.
+
+A regra principal é:
+
+> O núcleo do MigrationManager não deve conhecer APIs específicas de AWS, Azure, GCP, Floci, Docker, PostgreSQL, MySQL ou qualquer outra tecnologia concreta.
+
+Essas responsabilidades devem estar isoladas em implementações específicas das abstrações.
+
+---
+
+# 3. Requisitos tecnológicos
+
+Utilizar:
+
+* Python 3.12+
+* FastAPI
+* Pydantic v2
+* pytest
+* typing
+* abc / interfaces abstratas
+* dataclasses quando apropriado
+* arquitetura modular
+* princípios SOLID
+* Dependency Injection quando apropriado
+
+Não utilizar Kubernetes neste momento.
+
+A implantação inicial deve ser baseada em abstrações que possam posteriormente ser implementadas utilizando:
+
+* Docker;
+* ECS;
+* máquinas virtuais;
+* Kubernetes;
+* outros mecanismos de execução.
+
+O MigrationManager não deve depender diretamente de nenhuma dessas tecnologias.
+
+---
+
+# 4. Princípios arquiteturais
+
+O projeto deve seguir os seguintes princípios:
+
+### 4.1 Provider Agnostic
+
+O núcleo deve funcionar independentemente do provedor.
+
+Exemplo:
+
+```text
+MigrationManager
+       |
+       v
+CloudProvider
+       |
+       +---- AWSProvider
+       |
+       +---- AzureProvider
+       |
+       +---- GCPProvider
+```
+
+O `MigrationManager` deve trabalhar apenas com `CloudProvider`.
+
+---
+
+### 4.2 Infrastructure Agnostic
+
+O núcleo também não deve conhecer diretamente o mecanismo utilizado para executar o microsserviço.
+
+Por exemplo:
+
+```text
+ComputeProvider
+      |
+      +---- DockerComputeProvider
+      |
+      +---- ECSComputeProvider
+      |
+      +---- KubernetesComputeProvider
+      |
+      +---- VMComputeProvider
+```
+
+Neste momento, implementar apenas a abstração e uma implementação inicial compatível com o ambiente experimental.
+
+---
+
+### 4.3 Database Agnostic
+
+A migração dos dados também deve ser abstraída.
+
+O MigrationManager não deve possuir código específico como:
+
+```python
+psycopg2.connect(...)
+```
+
+ou:
+
+```python
+boto3.client("rds")
+```
+
+diretamente no domínio.
+
+Criar uma abstração:
+
+```python
+class DataMigrationProvider(ABC):
+    ...
+```
+
+que posteriormente poderá possuir implementações como:
+
+```text
+PostgreSQLDataMigrationProvider
+MySQLDataMigrationProvider
+AWSRDSDataMigrationProvider
+AzureDatabaseMigrationProvider
+```
+
+---
+
+### 4.4 Traffic Agnostic
+
+O mecanismo de redirecionamento de tráfego também deve ser abstraído.
+
+Criar uma interface semelhante a:
+
+```python
+class TrafficProvider(ABC):
+    ...
+```
+
+Ela deverá permitir:
+
+* obter rota atual;
+* redirecionar tráfego;
+* restaurar rota anterior;
+* validar rota.
+
+O MigrationManager não deve saber se o redirecionamento ocorre através de:
+
+* DNS;
+* Load Balancer;
+* API Gateway;
+* service discovery;
+* proxy;
+* IP;
+* porta;
+* Kubernetes Service;
+* ECS Service Discovery.
+
+---
+
+# 5. Modelo conceitual
+
+Considere uma aplicação:
+
+```text
+                ┌──────────────┐
+                │ API Gateway  │
+                └──────┬───────┘
+                       │
+                 ┌─────▼─────┐
+                 │   MS-A    │
+                 └─────┬─────┘
+                       │
+                 ┌─────▼─────┐
+                 │   MS-B    │
+                 └─────┬─────┘
+                       │
+                 ┌─────▼─────┐
+                 │   MS-C    │
+                 └───────────┘
+```
+
+O objetivo é migrar somente:
+
+```text
+MS-B
+```
+
+da Cloud A para a Cloud B.
+
+Antes:
+
+```text
+Cloud A
+ ├── MS-A
+ ├── MS-B
+ └── MS-C
+
+Cloud B
+ └── ...
+```
+
+Depois:
+
+```text
+Cloud A
+ ├── MS-A
+ └── MS-C
+
+Cloud B
+ └── MS-B
+```
+
+Durante a migração:
+
+```text
+Cloud A                     Cloud B
+
+MS-A ────────► MS-B          MS-B'
+                  │             ▲
+                  │             │
+                  └─────────────┘
+```
+
+O novo MS-B deve ser criado e validado antes que o MS-B original seja encerrado.
+
+---
+
+# 6. Entrada do MigrationManager
+
+O MigrationManager deverá receber uma especificação de migração.
+
+Criar modelos Pydantic para representar essa configuração.
+
+Exemplo:
+
+```json
+{
+  "migration_id": "migration-ms-b-001",
+
+  "microservice": {
+    "id": "ms-b",
+    "name": "ms-b",
+
+    "container": {
+      "image": "ms-b:1.0.0",
+      "port": 8080,
+      "environment": {
+        "ENV": "production"
+      }
+    },
+
+    "health_check": {
+      "path": "/health",
+      "port": 8080
+    },
+
+    "dependencies": [
+      {
+        "service_id": "ms-a",
+        "protocol": "http",
+        "port": 8080,
+        "required": true
+      },
+      {
+        "service_id": "ms-c",
+        "protocol": "http",
+        "port": 8080,
+        "required": true
+      }
+    ]
+  },
+
+  "source": {
+    "provider": "aws",
+    "region": "us-east-1",
+    "environment": "source"
+  },
+
+  "target": {
+    "provider": "aws",
+    "region": "us-east-1",
+    "environment": "target"
+  },
+
+  "data": {
+    "type": "postgresql",
+    "source": {
+      "host": "source-db",
+      "port": 5432,
+      "database": "ms_b"
+    },
+    "target": {
+      "host": "target-db",
+      "port": 5432,
+      "database": "ms_b"
+    }
+  }
+}
+```
+
+IMPORTANTE:
+
+Credenciais não devem ser armazenadas diretamente nessa configuração.
+
+Utilizar referências de segredo, por exemplo:
+
+```json
+{
+  "credentials_ref": "secret/ms-b/database"
+}
+```
+
+---
+
+# 7. Modelos de domínio
+
+Criar modelos para representar pelo menos:
+
+```text
+MigrationRequest
+MicroserviceConfig
+ContainerConfig
+HealthCheckConfig
+Dependency
+DependencyGraph
+ProviderConfig
+DataSourceConfig
+DataTargetConfig
+MigrationPlan
+Deployment
+DataMigrationResult
+ValidationResult
+MigrationResult
+RollbackResult
+```
+
+Utilizar `Enum` para estados e tipos conhecidos.
+
+---
+
+# 8. Contrato do provedor de nuvem
+
+Criar uma abstração:
+
+```python
+class CloudProvider(ABC):
+    ...
+```
+
+Ela deve representar as operações gerais necessárias para trabalhar com um provedor.
+
+Exemplo conceitual:
+
+```python
+class CloudProvider(ABC):
+
+    @abstractmethod
+    def deploy_service(
+        self,
+        config: MicroserviceConfig
+    ) -> Deployment:
+        pass
+
+    @abstractmethod
+    def remove_service(
+        self,
+        deployment: Deployment
+    ) -> None:
+        pass
+
+    @abstractmethod
+    def get_service_endpoint(
+        self,
+        deployment: Deployment
+    ) -> str:
+        pass
+
+    @abstractmethod
+    def health_check(
+        self,
+        deployment: Deployment
+    ) -> HealthStatus:
+        pass
+```
+
+Não implementar lógica específica de AWS nessa classe.
+
+---
+
+# 9. Contrato de infraestrutura/compute
+
+Criar uma abstração para implantação do container:
+
+```python
+class ComputeProvider(ABC):
+    ...
+```
+
+Responsabilidades:
+
+* criar execução do container;
+* iniciar serviço;
+* parar serviço;
+* remover serviço;
+* obter endpoint;
+* verificar status;
+* verificar saúde.
+
+Exemplo:
+
+```python
+class ComputeProvider(ABC):
+
+    @abstractmethod
+    def deploy(
+        self,
+        config: ContainerConfig
+    ) -> Deployment:
+        pass
+
+    @abstractmethod
+    def start(
+        self,
+        deployment: Deployment
+    ) -> None:
+        pass
+
+    @abstractmethod
+    def stop(
+        self,
+        deployment: Deployment
+    ) -> None:
+        pass
+
+    @abstractmethod
+    def remove(
+        self,
+        deployment: Deployment
+    ) -> None:
+        pass
+
+    @abstractmethod
+    def health_check(
+        self,
+        deployment: Deployment
+    ) -> HealthStatus:
+        pass
+```
+
+---
+
+# 10. Contrato para migração de dados
+
+Criar:
+
+```python
+class DataMigrationProvider(ABC):
+    ...
+```
+
+Responsabilidades:
+
+```python
+prepare_source()
+prepare_target()
+migrate()
+validate()
+cleanup()
+rollback()
+```
+
+Exemplo:
+
+```python
+class DataMigrationProvider(ABC):
+
+    @abstractmethod
+    def prepare_source(
+        self,
+        source: DataSourceConfig
+    ) -> None:
+        pass
+
+    @abstractmethod
+    def prepare_target(
+        self,
+        target: DataTargetConfig
+    ) -> None:
+        pass
+
+    @abstractmethod
+    def migrate(
+        self,
+        source: DataSourceConfig,
+        target: DataTargetConfig
+    ) -> DataMigrationResult:
+        pass
+
+    @abstractmethod
+    def validate(
+        self,
+        source: DataSourceConfig,
+        target: DataTargetConfig
+    ) -> ValidationResult:
+        pass
+
+    @abstractmethod
+    def rollback(
+        self,
+        target: DataTargetConfig
+    ) -> None:
+        pass
+```
+
+A implementação concreta deverá ser responsável pela estratégia utilizada para transferência dos dados.
+
+O MigrationManager apenas coordena essa operação.
+
+---
+
+# 11. Contrato para tráfego
+
+Criar:
+
+```python
+class TrafficProvider(ABC):
+    ...
+```
+
+Com operações:
+
+```python
+get_current_route()
+redirect()
+validate_route()
+restore()
+```
+
+Exemplo:
+
+```python
+class TrafficProvider(ABC):
+
+    @abstractmethod
+    def get_current_route(
+        self,
+        service_id: str
+    ) -> str:
+        pass
+
+    @abstractmethod
+    def redirect(
+        self,
+        service_id: str,
+        target_endpoint: str
+    ) -> None:
+        pass
+
+    @abstractmethod
+    def validate_route(
+        self,
+        service_id: str,
+        expected_endpoint: str
+    ) -> bool:
+        pass
+
+    @abstractmethod
+    def restore(
+        self,
+        service_id: str,
+        previous_endpoint: str
+    ) -> None:
+        pass
+```
+
+---
+
+# 12. Contrato para validação
+
+Criar uma abstração:
+
+```python
+class ValidationProvider(ABC):
+    ...
+```
+
+Ela deverá permitir validar:
+
+### Serviço
+
+* processo executando;
+* endpoint disponível;
+* health check;
+* porta disponível.
+
+### Dados
+
+* banco acessível;
+* quantidade de registros;
+* integridade básica;
+* dados essenciais presentes.
+
+### Aplicação
+
+* dependências acessíveis;
+* chamadas entre microsserviços;
+* rota correta;
+* ausência de erros críticos.
+
+---
+
+# 13. Dependency Graph
+
+As dependências entre microsserviços são importantes para a estratégia.
+
+Criar:
+
+```python
+class DependencyGraph:
+    ...
+```
+
+Exemplo:
+
+```text
+MS-A
+ │
+ ▼
+MS-B
+ │
+ ▼
+MS-C
+```
+
+O grafo deverá permitir:
+
+```python
+get_dependencies(service_id)
+get_dependents(service_id)
+validate_dependencies(service_id)
+```
+
+Por exemplo:
+
+```python
+graph.get_dependencies("ms-b")
+```
+
+deve retornar:
+
+```text
+MS-C
+```
+
+E:
+
+```python
+graph.get_dependents("ms-b")
+```
+
+deve retornar:
+
+```text
+MS-A
+```
+
+---
+
+# 14. Provider Factory
+
+Criar uma fábrica responsável por selecionar as implementações adequadas.
+
+Exemplo:
+
+```python
+class ProviderFactory:
+
+    def create_cloud_provider(
+        self,
+        config: ProviderConfig
+    ) -> CloudProvider:
+        ...
+```
+
+Não utilizar `if` espalhados pelo sistema.
+
+Concentrar a resolução dos provedores em uma única camada.
+
+Exemplo:
+
+```text
+ProviderFactory
+       |
+       +── AWS
+       |
+       +── Azure
+       |
+       +── GCP
+```
+
+E:
+
+```text
+AWSProvider
+   |
+   +── ComputeProvider
+   +── DataMigrationProvider
+   +── TrafficProvider
+```
+
+---
+
+# 15. MigrationManager
+
+Criar a classe principal:
+
+```python
+class MigrationManager:
+    ...
+```
+
+Ela deve ser o principal orquestrador do processo.
+
+Interface mínima:
+
+```python
+class MigrationManager:
+
+    def prepare(
+        self,
+        request: MigrationRequest
+    ) -> MigrationPlan:
+        ...
+
+    def migrate(
+        self,
+        plan: MigrationPlan
+    ) -> MigrationResult:
+        ...
+
+    def validate(
+        self,
+        plan: MigrationPlan
+    ) -> ValidationResult:
+        ...
+
+    def rollback(
+        self,
+        plan: MigrationPlan
+    ) -> RollbackResult:
+        ...
+```
+
+O `MigrationManager` não deve executar diretamente operações de:
+
+```text
+Docker
+AWS
+PostgreSQL
+HTTP
+DNS
+```
+
+Ele apenas deve coordenar abstrações.
+
+---
+
+# 16. Fluxo da migração
+
+Implementar inicialmente o seguinte fluxo:
+
+```text
+PENDING
+   |
+   v
+PREPARING
+   |
+   v
+PREPARED
+   |
+   v
+MIGRATING_DATA
+   |
+   v
+DATA_MIGRATED
+   |
+   v
+DEPLOYING_TARGET
+   |
+   v
+TARGET_DEPLOYED
+   |
+   v
+VALIDATING_TARGET
+   |
+   v
+TARGET_VALID
+   |
+   v
+REDIRECTING_TRAFFIC
+   |
+   v
+TRAFFIC_REDIRECTED
+   |
+   v
+VALIDATING_APPLICATION
+   |
+   v
+MIGRATION_COMPLETED
+   |
+   v
+SOURCE_CLEANUP
+   |
+   v
+COMPLETED
+```
+
+Qualquer erro deve permitir:
+
+```text
+FAILED
+  |
+  v
+ROLLING_BACK
+  |
+  v
+ROLLED_BACK
+```
+
+---
+
+# 17. Estratégia de migração
+
+A primeira estratégia deve priorizar continuidade do serviço.
+
+O fluxo conceitual é:
+
+### Etapa 1 — Preparação
+
+Obter informações:
+
+* serviço;
+* dependências;
+* provedor de origem;
+* provedor de destino;
+* dados;
+* configuração do container.
+
+---
+
+### Etapa 2 — Preparação dos dados
+
+Preparar origem e destino.
+
+```text
+Source DB
+    |
+    | migration
+    v
+Target DB
+```
+
+---
+
+### Etapa 3 — Migração dos dados
+
+Executar o mecanismo fornecido por:
+
+```python
+DataMigrationProvider
+```
+
+---
+
+### Etapa 4 — Implantação
+
+Criar o microsserviço no destino:
+
+```text
+Cloud A
+
+MS-B
+```
+
+continua funcionando.
+
+Ao mesmo tempo:
+
+```text
+Cloud B
+
+MS-B'
+```
+
+é iniciado.
+
+---
+
+### Etapa 5 — Validação
+
+Validar:
+
+```text
+MS-B'
+ ├── health check
+ ├── dependências
+ ├── banco
+ └── configuração
+```
+
+---
+
+### Etapa 6 — Redirecionamento
+
+Alterar a rota:
+
+```text
+MS-A
+  |
+  | antes
+  v
+MS-B
+```
+
+para:
+
+```text
+MS-A
+  |
+  | depois
+  v
+MS-B'
+```
+
+---
+
+### Etapa 7 — Validação da aplicação
+
+Confirmar:
+
+```text
+MS-A → MS-B' → MS-C
+```
+
+funcionando corretamente.
+
+---
+
+### Etapa 8 — Finalização
+
+Somente depois da validação:
+
+```text
+MS-B
+```
+
+pode ser encerrado.
+
+---
+
+# 18. Rollback
+
+O sistema deve possuir rollback.
+
+Exemplo:
+
+```text
+MS-B
+   |
+   | migração
+   v
+MS-B'
+```
+
+Se ocorrer falha:
+
+```text
+MS-B' ❌
+```
+
+o sistema deve:
+
+1. restaurar o tráfego para MS-B;
+2. validar MS-B;
+3. remover/encerrar MS-B';
+4. preservar o estado de origem;
+5. registrar a falha.
+
+O rollback deve ser coordenado pelo MigrationManager.
+
+---
+
+# 19. Estado da migração
+
+Criar um enum:
+
+```python
+class MigrationState(Enum):
+    PENDING = "pending"
+    PREPARING = "preparing"
+    PREPARED = "prepared"
+    MIGRATING_DATA = "migrating_data"
+    DATA_MIGRATED = "data_migrated"
+    DEPLOYING_TARGET = "deploying_target"
+    TARGET_DEPLOYED = "target_deployed"
+    VALIDATING_TARGET = "validating_target"
+    TARGET_VALID = "target_valid"
+    REDIRECTING_TRAFFIC = "redirecting_traffic"
+    TRAFFIC_REDIRECTED = "traffic_redirected"
+    VALIDATING_APPLICATION = "validating_application"
+    SOURCE_CLEANUP = "source_cleanup"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    ROLLING_BACK = "rolling_back"
+    ROLLED_BACK = "rolled_back"
+```
+
+Implementar controle explícito das transições.
+
+Não permitir transições inválidas.
+
+---
+
+# 20. Registro e observabilidade
+
+O MigrationManager deve registrar cada etapa.
+
+Cada evento deve conter pelo menos:
+
+```text
+migration_id
+timestamp
+state
+operation
+status
+message
+duration
+```
+
+Exemplo:
+
+```json
+{
+  "migration_id": "migration-ms-b-001",
+  "state": "deploying_target",
+  "operation": "deploy_service",
+  "status": "success",
+  "duration_ms": 1250
+}
+```
+
+Essas informações serão importantes posteriormente para avaliar experimentalmente:
+
+* tempo total de migração;
+* tempo de indisponibilidade;
+* duração da migração dos dados;
+* tempo de implantação;
+* tempo de validação;
+* tempo de redirecionamento.
+
+---
+
+# 21. API REST
+
+Criar uma API utilizando FastAPI.
+
+Endpoints iniciais:
+
+```text
+POST /migrations
+GET  /migrations/{migration_id}
+POST /migrations/{migration_id}/prepare
+POST /migrations/{migration_id}/execute
+POST /migrations/{migration_id}/validate
+POST /migrations/{migration_id}/rollback
+```
+
+O endpoint:
+
+```text
+POST /migrations
+```
+
+deve receber o `MigrationRequest`.
+
+---
+
+# 22. Estrutura de projeto
+
+Criar a seguinte estrutura:
+
+```text
+migration-manager/
+│
+├── app/
+│   │
+│   ├── api/
+│   │   └── controllers/
+│   │       └── migration_controller.py
+│   │
+│   ├── application/
+│   │   ├── migration_manager.py
+│   │   ├── migration_executor.py
+│   │   ├── dependency_manager.py
+│   │   └── validation_service.py
+│   │
+│   ├── domain/
+│   │   │
+│   │   ├── models/
+│   │   │   ├── migration.py
+│   │   │   ├── microservice.py
+│   │   │   ├── dependency.py
+│   │   │   ├── provider.py
+│   │   │   ├── deployment.py
+│   │   │   └── data.py
+│   │   │
+│   │   ├── enums/
+│   │   │   ├── migration_state.py
+│   │   │   └── provider_type.py
+│   │   │
+│   │   └── contracts/
+│   │       ├── cloud_provider.py
+│   │       ├── compute_provider.py
+│   │       ├── data_migration_provider.py
+│   │       ├── traffic_provider.py
+│   │       └── validation_provider.py
+│   │
+│   ├── infrastructure/
+│   │   │
+│   │   ├── providers/
+│   │   │   ├── aws/
+│   │   │   │   ├── aws_provider.py
+│   │   │   │   ├── aws_compute.py
+│   │   │   │   ├── aws_data.py
+│   │   │   │   └── aws_traffic.py
+│   │   │   │
+│   │   │   └── factory.py
+│   │   │
+│   │   └── persistence/
+│   │
+│   └── main.py
+│
+├── configs/
+│   └── migration.json
+│
+├── tests/
+│   ├── domain/
+│   ├── application/
+│   └── infrastructure/
+│
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+└── README.md
+```
+
+---
+
+# 23. Separação das responsabilidades
+
+A arquitetura deve respeitar:
+
+```text
+API
+ |
+ v
+Application
+ |
+ v
+Domain Contracts
+ |
+ v
+Infrastructure
+```
+
+A regra é:
+
+```text
+Domain NÃO conhece Infrastructure.
+```
+
+Por exemplo:
+
+ERRADO:
+
+```python
+from boto3 import client
+```
+
+dentro de:
+
+```text
+domain/
+```
+
+CORRETO:
+
+```text
+domain/
+    CloudProvider
+        ↑
+        |
+infrastructure/
+    AWSProvider
+```
+
+---
+
+# 24. AWS/Floci
+
+Criar inicialmente uma implementação de provedor para o ambiente AWS emulado pelo Floci.
+
+Porém:
+
+**Floci não deve aparecer no domínio da aplicação.**
+
+O código deve enxergar:
+
+```python
+CloudProvider
+```
+
+e a implementação concreta pode utilizar:
+
+```text
+AWSProvider
+```
+
+que posteriormente poderá utilizar:
+
+```text
+boto3
+```
+
+e o endpoint do Floci.
+
+A configuração do endpoint deve ser externa:
+
+```env
+AWS_ENDPOINT_URL=http://localhost:4566
+```
+
+Não colocar o endereço diretamente nas classes de domínio.
+
+---
+
+# 25. Não implementar Kubernetes
+
+Neste momento:
+
+* não utilizar Kubernetes;
+* não criar manifests Kubernetes;
+* não utilizar Kubernetes API;
+* não criar KubernetesProvider.
+
+A arquitetura, entretanto, deve permitir adicionar Kubernetes futuramente sem modificar o MigrationManager.
+
+---
+
+# 26. Não acoplar a estratégia à implementação
+
+Evitar código como:
+
+```python
+if provider == "aws":
+    ...
+elif provider == "azure":
+    ...
+```
+
+dentro do MigrationManager.
+
+Evitar também:
+
+```python
+if database == "postgresql":
+    ...
+elif database == "mysql":
+    ...
+```
+
+dentro do MigrationManager.
+
+Essas decisões devem ser resolvidas por:
+
+```text
+Factory
+Adapter
+Provider
+Strategy
+```
+
+---
+
+# 27. Migration Strategy
+
+Além dos contratos de infraestrutura, criar uma abstração para estratégia de migração:
+
+```python
+class MigrationStrategy(ABC):
+    @abstractmethod
+    def execute(
+        self,
+        context: MigrationContext
+    ) -> MigrationResult:
+        pass
+```
+
+Criar inicialmente uma estratégia:
+
+```text
+ContinuousMigrationStrategy
+```
+
+responsável por implementar:
+
+```text
+prepare
+→ migrate data
+→ deploy target
+→ validate
+→ redirect
+→ validate
+→ cleanup source
+```
+
+Posteriormente será possível implementar:
+
+```text
+StopAndCopyMigrationStrategy
+PreCopyMigrationStrategy
+PostCopyMigrationStrategy
+HybridMigrationStrategy
+```
+
+sem modificar o MigrationManager.
+
+---
+
+# 28. Migration Context
+
+Criar um objeto:
+
+```python
+MigrationContext
+```
+
+contendo todas as informações necessárias durante a execução.
+
+Exemplo:
+
+```text
+MigrationContext
+├── MigrationRequest
+├── SourceProvider
+├── TargetProvider
+├── SourceDeployment
+├── TargetDeployment
+├── DataMigrationResult
+├── OriginalRoute
+├── CurrentState
+└── Events
+```
+
+O contexto deve acompanhar a migração do início ao fim.
+
+---
+
+# 29. Requisitos de qualidade
+
+O código deve:
+
+* possuir type hints;
+* possuir docstrings nas interfaces;
+* utilizar classes pequenas;
+* evitar funções gigantes;
+* evitar lógica duplicada;
+* utilizar dependency injection;
+* possuir tratamento de exceções;
+* possuir logs;
+* possuir testes unitários;
+* possuir testes dos contratos;
+* possuir testes das transições de estado;
+* possuir testes do DependencyGraph;
+* possuir testes de rollback.
+
+---
+
+# 30. Testes
+
+Criar testes para pelo menos:
+
+### Teste 1 — Configuração válida
+
+Verificar se um `MigrationRequest` válido é aceito.
+
+### Teste 2 — Configuração inválida
+
+Verificar rejeição de:
+
+* provider ausente;
+* microsserviço sem imagem;
+* porta inválida;
+* destino ausente;
+* dados inválidos.
+
+### Teste 3 — DependencyGraph
+
+Validar:
+
+```text
+MS-A → MS-B → MS-C
+```
+
+### Teste 4 — Estado da migração
+
+Verificar que:
+
+```text
+PENDING → PREPARING
+```
+
+é válido.
+
+Mas:
+
+```text
+PENDING → COMPLETED
+```
+
+é inválido.
+
+### Teste 5 — Rollback
+
+Simular falha durante:
+
+```text
+REDIRECTING_TRAFFIC
+```
+
+e verificar:
+
+```text
+ROLLBACK
+```
+
+### Teste 6 — Provider Factory
+
+Verificar criação do provider correto.
+
+### Teste 7 — MigrationManager
+
+Mockar todos os providers e verificar se as etapas são executadas na ordem correta.
+
+---
+
+# 31. Regra fundamental
+
+O MigrationManager deve ser um **orquestrador**, não um executor de infraestrutura.
+
+Ele deve decidir:
+
+```text
+O QUE fazer
+QUANDO fazer
+EM QUAL ORDEM fazer
+COMO tratar sucesso
+COMO tratar falha
+QUANDO executar rollback
+```
+
+Enquanto os providers devem decidir:
+
+```text
+COMO executar uma operação específica naquele ambiente.
+```
+
+Exemplo:
+
+```text
+MigrationManager
+       |
+       | deploy_service()
+       v
+ComputeProvider
+       |
+       v
+AWSComputeProvider
+       |
+       v
+AWS / Floci
+```
+
+---
+
+# 32. Resultado esperado
+
+Gere um projeto Python funcional contendo:
+
+1. toda a estrutura de diretórios;
+2. modelos Pydantic;
+3. enums;
+4. contratos/interfaces;
+5. DependencyGraph;
+6. MigrationContext;
+7. MigrationStateMachine;
+8. MigrationStrategy;
+9. ContinuousMigrationStrategy;
+10. MigrationManager;
+11. ProviderFactory;
+12. abstração de Compute;
+13. abstração de Data Migration;
+14. abstração de Traffic;
+15. abstração de Validation;
+16. implementação inicial de AWS/Floci utilizando mocks/stubs quando uma operação real ainda não estiver implementada;
+17. API FastAPI;
+18. configuração de exemplo;
+19. testes automatizados;
+20. Dockerfile;
+21. docker-compose.yml;
+22. requirements.txt;
+23. README.md.
+
+---
+
+# 33. Importante sobre a implementação inicial
+
+Não tentar implementar toda a integração AWS/Floci de uma vez.
+
+A primeira versão deve priorizar:
+
+```text
+CONTRATOS
+    ↓
+MODELOS
+    ↓
+ORQUESTRAÇÃO
+    ↓
+ESTADOS
+    ↓
+ESTRATÉGIA
+    ↓
+MOCKS/ADAPTERS
+```
+
+Depois disso, as implementações concretas dos provedores poderão ser adicionadas progressivamente.
+
+O código deve ser executável mesmo que algumas operações de infraestrutura estejam inicialmente implementadas como mocks.
+
+---
+
+# 34. Resultado arquitetural desejado
+
+O resultado final deve permitir futuramente uma configuração semelhante a:
+
+```text
+MigrationManager
+        |
+        +-----------------------+
+        |                       |
+        v                       v
+   Source Provider         Target Provider
+        |                       |
+      AWS                     AWS
+        |                       |
+     Floci A                 Floci B
+        |                       |
+        v                       v
+   MS-B + DB                 MS-B' + DB'
+```
+
+E posteriormente:
+
+```text
+MigrationManager
+        |
+        +-----------------------+
+        |                       |
+        v                       v
+   AWS Provider           Azure Provider
+        |                       |
+      AWS ECS                 Azure
+```
+
+sem modificar a lógica central de migração.
+
+A mesma estratégia deve poder ser utilizada independentemente dos provedores concretos.
+
+---
+
+# 35. Princípio final da arquitetura
+
+A arquitetura deve seguir a seguinte ideia:
+
+> **"O MigrationManager conhece o processo de migração. Os Providers conhecem a infraestrutura."**
+
+Portanto:
+
+```text
+                    MIGRATION MANAGER
+                           |
+              ┌────────────┼────────────┐
+              |            |            |
+              v            v            v
+           COMPUTE       DATA        TRAFFIC
+              |            |            |
+              v            v            v
+          PROVIDER      PROVIDER     PROVIDER
+              |            |            |
+              +------------+------------+
+                           |
+                           v
+                    CLOUD PROVIDER
+                           |
+             ┌─────────────┼─────────────┐
+             v             v             v
+            AWS          AZURE          GCP
+```
+
+O sistema deve ser projetado desde o início para permitir a substituição de qualquer um desses componentes sem alteração significativa no núcleo do MigrationManager.

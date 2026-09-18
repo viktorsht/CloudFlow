@@ -1,0 +1,24 @@
+{
+  "000000000000/us-east-1::sg-default-us-east-1" : {
+    "groupId" : "sg-default-us-east-1",
+    "groupName" : "default",
+    "description" : "default VPC security group",
+    "vpcId" : "vpc-default-us-east-1",
+    "ownerId" : "000000000000",
+    "region" : "us-east-1",
+    "ipPermissions" : [ ],
+    "ipPermissionsEgress" : [ {
+      "ipProtocol" : "-1",
+      "fromPort" : null,
+      "toPort" : null,
+      "ipRanges" : [ {
+        "cidrIp" : "0.0.0.0/0",
+        "description" : null
+      } ],
+      "ipv6Ranges" : [ ],
+      "userIdGroupPairs" : [ ],
+      "prefixListIds" : [ ]
+    } ],
+    "tags" : [ ]
+  }
+}

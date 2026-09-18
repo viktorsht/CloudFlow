@@ -1,0 +1,21 @@
+{
+  "000000000000/us-east-1::vpc-default-us-east-1" : {
+    "vpcId" : "vpc-default-us-east-1",
+    "cidrBlock" : "172.31.0.0/16",
+    "state" : "available",
+    "dhcpOptionsId" : "dopt-default",
+    "instanceTenancy" : "default",
+    "ownerId" : "000000000000",
+    "region" : "us-east-1",
+    "cidrBlockAssociationSet" : [ {
+      "associationId" : "vpc-cidr-assoc-default",
+      "cidrBlock" : "172.31.0.0/16",
+      "cidrBlockState" : "associated"
+    } ],
+    "enableDnsSupport" : true,
+    "enableDnsHostnames" : false,
+    "enableNetworkAddressUsageMetrics" : false,
+    "tags" : [ ],
+    "default" : true
+  }
+}

@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      # Faz o gateway propagar X-Forwarded-For / X-Forwarded-Host para os
+      # microsservicos, para que eles consigam extrair o IP real do cliente.
+      x-forwarded:
+        enabled: true
+        for-enabled: true
+        host-enabled: true
+        proto-enabled: true
+      routes:
+        - id: ms1-route
+          uri: ${MS1_URI:http://localhost:8081}
+          predicates:
+            - Path=/ms1/**
+          filters:
+            - StripPrefix=1
+
+        - id: ms2-route
+          uri: ${MS2_URI:http://localhost:8082}
+          predicates:
+            - Path=/ms2/**
+          filters:
+            - StripPrefix=1
+
+        - id: ms3-route
+          uri: ${MS3_URI:http://localhost:8083}
+          predicates:
+            - Path=/ms3/**
+          filters:
+            - StripPrefix=1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: never

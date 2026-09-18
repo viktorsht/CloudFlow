@@ -1,0 +1,36 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: ms3-simple
+  datasource:
+    # Cada microsservico tem seu PROPRIO banco PostgreSQL (database per
+    # service) - nao ha compartilhamento de schema/tabela entre MS1, MS2 e MS3.
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ms3_db}
+    username: ${DB_USER:ms3_user}
+    password: ${DB_PASSWORD:ms3_pass}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+# app.provider identifica em qual provedor de nuvem este microsservico esta
+# rodando (local, aws, azure, gcp...). E o "gancho" usado depois para os
+# testes de migracao com Floci: basta trocar essa env var por ambiente.
+app:
+  provider: ${APP_PROVIDER:local}
+  ms-name: ${APP_MS_NAME:ms3}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
