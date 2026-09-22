@@ -1,0 +1,50 @@
+services:
+  migration-manager:
+    build: .
+    ports: ["8000:8000"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
+    # depends_on: [floci, floci-az, gateway]
+    depends_on: [floci-az]
+    networks: [migration-network]
+
+  # Infraestrutura estavel e neutra: ela nao e parte da task migrada.
+  # gateway:
+  #   build: ../Código antigo/microservices-demo/api-gateway
+  #   ports: ["8080:8080"]
+  #   environment:
+  #     MS1_URI: http://host.docker.internal:8081
+  #     MS2_URI: http://host.docker.internal:8082
+  #     MS3_URI: http://host.docker.internal:8083
+  #   extra_hosts: ["host.docker.internal:host-gateway"]
+  #   networks: [migration-network]
+
+  # floci:
+  #   image: floci/floci:latest
+  #   ports: ["4566:4566", "7001-7099:7001-7099"]
+  #   volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
+  #   environment:
+  #     FLOCI_SERVICES_DOCKER_NETWORK: migration-manager-network
+  #     FLOCI_SERVICES_ECS_ENABLED: "true"
+  #     FLOCI_SERVICES_ECS_MOCK: "false"
+  #     FLOCI_SERVICES_ECS_DOCKER_NETWORK: migration-manager-network
+  #     FLOCI_SERVICES_RDS_ENABLED: "true"
+  #     FLOCI_SERVICES_RDS_MOCK: "false"
+  #     FLOCI_SERVICES_RDS_DOCKER_NETWORK: migration-manager-network
+  #     FLOCI_SERVICES_RDS_PROXY_BASE_PORT: "7001"
+  #     FLOCI_SERVICES_RDS_PROXY_MAX_PORT: "7099"
+  #   networks: [migration-network]
+
+  floci-az:
+    image: floci/floci-az:latest
+    ports: ["4577:4577"]
+    volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
+    environment:
+      FLOCI_AZ_SERVICES_CONTAINER_APPS_MOCKED: "false"
+      FLOCI_AZ_SERVICES_POSTGRES_MOCKED: "false"
+      FLOCI_AZ_SERVICES_DOCKER_NETWORK: migration-manager-network
+    networks: [migration-network]
+
+networks:
+  migration-network:
+    name: migration-manager-network
