@@ -24,6 +24,7 @@ from app.domain.models.migration import (
 )
 from app.domain.models.provider import ProviderConfig
 from app.infrastructure.providers.factory import UnsupportedProviderError
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -173,7 +174,7 @@ _lock = threading.Lock()
 _active: dict[str, str] = {}  # microservice.id -> migration_id em andamento
 # migration_id -> None (concluida com sucesso) ou mensagem de erro (falhou).
 # So existe depois que a execucao terminou, e e o que define COMPLETED/FAILED.
-_results: dict[str, str | None] = {}
+_results: dict[str, MigrationResult] = {}
 
 
 class MigrationStatus(str, Enum):
@@ -220,8 +221,11 @@ class MigrationSummary(BaseModel):
 
 
 class MigrationStatusResponse(MigrationSummary):
-    state: str  # etapa atual detalhada, ex.: "migrating_data"
+    state: str
     error: str | None = None
+    downtime_seconds: float | None = None
+    downtime_started_at: datetime | None = None
+    downtime_finished_at: datetime | None = None
 
 
 @migrate_router.post("/stop-and-migrate", status_code=202, response_model=MigrationSummary)
@@ -255,39 +259,88 @@ def start_stop_and_migrate(
     return _summary(plan, MigrationStatus.PENDING)
 
 
-@migrate_router.get("/{migration_id}/status", response_model=MigrationStatusResponse)
-def get_migration_status(
-    migration_id: str, manager: MigrationManager = Depends(get_manager)
-) -> MigrationStatusResponse:
+# @migrate_router.get("/{migration_id}/status", response_model=MigrationStatusResponse)
+# def get_migration_status(
+#     migration_id: str, manager: MigrationManager = Depends(get_manager)
+# ) -> MigrationStatusResponse:
+#     plan = _plans.get(migration_id)
+#     if plan is None:
+#         raise HTTPException(status_code=404, detail=f"Migracao '{migration_id}' nao encontrada")
+#     state = manager.get_state(migration_id)
+#     summary = _summary(plan, _status_of(migration_id, state))
+#     return MigrationStatusResponse(**summary.model_dump(), state=state.value, error=_results.get(migration_id))
+
+@migrate_router.get("/{migration_id}/status",response_model=MigrationStatusResponse)
+def get_migration_status(migration_id: str,manager: MigrationManager = Depends(get_manager)) -> MigrationStatusResponse:
     plan = _plans.get(migration_id)
+
     if plan is None:
-        raise HTTPException(status_code=404, detail=f"Migracao '{migration_id}' nao encontrada")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Migracao '{migration_id}' nao encontrada",
+        )
+
     state = manager.get_state(migration_id)
-    summary = _summary(plan, _status_of(migration_id, state))
-    return MigrationStatusResponse(**summary.model_dump(), state=state.value, error=_results.get(migration_id))
+    status = _status_of(migration_id, state)
+    summary = _summary(plan, status)
+    result = _results.get(migration_id)
+
+    return MigrationStatusResponse(
+        **summary.model_dump(),
+        state=state.value,
+        error=(
+            result.message
+            if result and not result.success
+            else None
+        ),
+        downtime_seconds=(
+            result.downtime_seconds
+            if result
+            else None
+        ),
+        downtime_started_at=(
+            result.downtime_started_at
+            if result
+            else None
+        ),
+        downtime_finished_at=(
+            result.downtime_finished_at
+            if result
+            else None
+        ),
+    )
 
 
 def _run_migration(manager: MigrationManager, plan: MigrationPlan) -> None:
-    error: str | None = None
     try:
         result = manager.migrate(plan)
-        if not result.success:
-            error = result.message or "Migracao falhou"
-    except Exception as exc:  # noqa: BLE001 - a thread nunca pode morrer sem registrar o resultado
-        logger.exception("Migracao %s terminou com erro inesperado", plan.migration_id)
-        error = str(exc) or type(exc).__name__
+
+    except Exception as exc:  # noqa: BLE001
+        logger.exception(
+            "Migracao %s terminou com erro inesperado",
+            plan.migration_id,
+        )
+
+        result = MigrationResult(
+            migration_id=plan.migration_id,
+            success=False,
+            final_state=MigrationState.FAILED,
+            events=[],
+            message=str(exc) or type(exc).__name__,
+        )
+
     with _lock:
-        # Libera o microsservico antes de publicar o resultado: quem ler um
-        # status final ja pode iniciar outra migracao do mesmo servico.
         _active.pop(plan.request.microservice.id, None)
-        _results[plan.migration_id] = error
+        _results[plan.migration_id] = result
 
 
 def _status_of(migration_id: str, state: MigrationState) -> MigrationStatus:
     if state in (MigrationState.ROLLING_BACK, MigrationState.ROLLED_BACK):
         return MigrationStatus.FAILED
+    # if migration_id in _results:
+        # return MigrationStatus.FAILED if _results[migration_id] else MigrationStatus.COMPLETED
     if migration_id in _results:
-        return MigrationStatus.FAILED if _results[migration_id] else MigrationStatus.COMPLETED
+        return (MigrationStatus.COMPLETED if _results[migration_id].success else MigrationStatus.FAILED)
     return MigrationStatus.PENDING if state is MigrationState.PENDING else MigrationStatus.IN_PROGRESS
 
 

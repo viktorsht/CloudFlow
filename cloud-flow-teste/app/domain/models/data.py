@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 from app.domain.enums.provider_type import DataEngineType
 
@@ -45,6 +46,9 @@ class DataMigrationResult(BaseModel):
     started_at: str | None = None
     finished_at: str | None = None
     message: str | None = None
+    downtime_seconds: float | None = None
+    downtime_started_at: datetime | None = None
+    downtime_finished_at: datetime | None = None
 
 
 class ValidationResult(BaseModel):

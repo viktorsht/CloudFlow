@@ -11,7 +11,7 @@
     "allocatedStorage" : 20,
     "status" : "AVAILABLE",
     "endpoint" : {
-      "address" : "172.19.0.2",
+      "address" : "172.20.0.2",
       "port" : 7001
     },
     "iamDatabaseAuthenticationEnabled" : false,
@@ -30,6 +30,7 @@
     "preferredBackupWindow" : "04:00-06:00",
     "preferredMaintenanceWindow" : "mon:00:00-mon:03:00",
     "copyTagsToSnapshot" : false,
+    "publiclyAccessible" : false,
     "subnetAvailabilityZones" : {
       "subnet-default-us-east-1-c" : "us-east-1c",
       "subnet-default-us-east-1-a" : "us-east-1a",
@@ -46,8 +47,8 @@
     "dockerVolumeName" : "floci-rds-db-1B65434ACAA343588E039110-ea8058",
     "volumeId" : "ea8058",
     "containerStorageResourceId" : "db-1B65434ACAA343588E039110",
-    "containerId" : "e6c037746e35de8f409d9fdb5438f59b57659bda6ecb0b87e524bfa343ff153f",
-    "containerHost" : "172.19.0.3",
+    "containerId" : "a64118ede3845c853ddd7ead20f03bd85837f2605eb3b5864851484367aa91bd",
+    "containerHost" : "172.20.0.3",
     "containerPort" : 5432
   },
   "000000000000/us-east-1::ms2-db" : {
@@ -62,7 +63,7 @@
     "allocatedStorage" : 20,
     "status" : "AVAILABLE",
     "endpoint" : {
-      "address" : "172.19.0.2",
+      "address" : "172.20.0.2",
       "port" : 7002
     },
     "iamDatabaseAuthenticationEnabled" : false,
@@ -81,6 +82,7 @@
     "preferredBackupWindow" : "04:00-06:00",
     "preferredMaintenanceWindow" : "mon:00:00-mon:03:00",
     "copyTagsToSnapshot" : false,
+    "publiclyAccessible" : false,
     "subnetAvailabilityZones" : {
       "subnet-default-us-east-1-c" : "us-east-1c",
       "subnet-default-us-east-1-a" : "us-east-1a",
@@ -97,8 +99,8 @@
     "dockerVolumeName" : "floci-rds-db-C8B8174AC0914BC3A0F13F9D-f0e7c6",
     "volumeId" : "f0e7c6",
     "containerStorageResourceId" : "db-C8B8174AC0914BC3A0F13F9D",
-    "containerId" : "3f436c9c06aff2ff77d8afe229e2371e18b142b0740a4e1372eb7540367ea391",
-    "containerHost" : "172.19.0.4",
+    "containerId" : "9e9df459fd959090259258053926f165616cc416c91879f1b524d2b6a91eea92",
+    "containerHost" : "172.20.0.4",
     "containerPort" : 5432
   },
   "000000000000/us-east-1::ms3-db" : {
@@ -113,7 +115,7 @@
     "allocatedStorage" : 20,
     "status" : "AVAILABLE",
     "endpoint" : {
-      "address" : "172.19.0.2",
+      "address" : "172.20.0.2",
       "port" : 7003
     },
     "iamDatabaseAuthenticationEnabled" : false,
@@ -132,6 +134,7 @@
     "preferredBackupWindow" : "04:00-06:00",
     "preferredMaintenanceWindow" : "mon:00:00-mon:03:00",
     "copyTagsToSnapshot" : false,
+    "publiclyAccessible" : false,
     "subnetAvailabilityZones" : {
       "subnet-default-us-east-1-c" : "us-east-1c",
       "subnet-default-us-east-1-a" : "us-east-1a",
@@ -148,8 +151,8 @@
     "dockerVolumeName" : "floci-rds-db-2DB2D946BC864417AA6197E1-f2001c",
     "volumeId" : "f2001c",
     "containerStorageResourceId" : "db-2DB2D946BC864417AA6197E1",
-    "containerId" : "bf53931e38fe06988edd187d101e39766c3e1217f7dd0352cfcded523098f1fc",
-    "containerHost" : "172.19.0.5",
+    "containerId" : "78886c2771dde16dde7d05af00d40732faf4e2c1824c90e35f767decab529738",
+    "containerHost" : "172.20.0.5",
     "containerPort" : 5432
   }
 }

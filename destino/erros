@@ -1,0 +1,15 @@
+Quando o Floci-AZ novo sobe, ele lê o postgres.json antigo, tenta "restaurar" esse servidor órfão — e é exatamente esse caminho de restauração que trava (nenhum container novo sobe). Parece que essa restauração travada bloqueia todo o resto da fila de criação de bancos, inclusive o ms2-azure-db novo, que fica preso em port: 0 por tabela.
+
+# No diretório do projeto floci-az
+docker compose down
+
+# Zera o estado persistido (não tem nada de valor ali, é só o emulador)
+rm -rf floci-az-data
+mkdir floci-az-data
+
+docker compose up -d
+
+# Confirma que subiu limpo, sem "Restored N PostgreSQL server(s)" no log
+docker logs floci-az | grep -i "restored"
+
+O grep do último comando não deve retornar nada — se não retornar, o Floci-AZ subiu sem nenhum estado velho pra restaurar. Aí é só repetir a migração com um migration_id novo.

@@ -41,6 +41,7 @@ class StopAndMigrateStrategy(MigrationStrategy):
             self._transition(sm, context, MigrationState.TARGET_DATABASE_READY)
 
             self._transition(sm, context, MigrationState.QUIESCING_SOURCE)
+            context.downtime.start()
             context.original_route = self._executor.run(context, sm.state, "get_original_route", lambda: context.traffic_provider.get_current_route(service_id))
             self._executor.run(context, sm.state, "enable_maintenance", lambda: context.traffic_provider.enable_maintenance(service_id))
             context.maintenance_enabled = True
@@ -74,6 +75,7 @@ class StopAndMigrateStrategy(MigrationStrategy):
             application = self._executor.run(context, sm.state, "validate_application", lambda: context.target.validation_provider.validate_application(service_id, context.target_deployment, context.dependency_graph))
             public = self._executor.run(context, sm.state, "validate_public_application", lambda: context.traffic_provider.validate_public_application(service_id))
             self._require(application.success and public, "Validacao da aplicacao apos o corte falhou")
+            context.downtime.stop()
             self._transition(sm, context, MigrationState.MIGRATION_COMPLETED)
             self._transition(sm, context, MigrationState.SOURCE_CLEANUP)
             self._transition(sm, context, MigrationState.COMPLETED)
@@ -81,6 +83,7 @@ class StopAndMigrateStrategy(MigrationStrategy):
         except Exception as exc:  # noqa: BLE001
             logger.exception("Migracao stop_and_migrate %s falhou", context.migration_id)
             self._compensate(context, service_id)
+            context.downtime.stop()
             context.current_state = MigrationState.FAILED
             return MigrationResult(migration_id=context.migration_id, success=False, final_state=MigrationState.FAILED, events=context.events, message=str(exc))
 

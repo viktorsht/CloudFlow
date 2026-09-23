@@ -104,7 +104,13 @@ class MigrationManager:
         """Executa a migracao descrita pelo plano, delegando para a estrategia."""
         context = self._get_context(plan.migration_id)
         result = self._strategies[plan.request.mode].execute(context)
-        return result
+        return result.model_copy(
+            update={
+                "downtime_seconds": context.downtime.duration_seconds,
+                "downtime_started_at": context.downtime.started_at,
+                "downtime_finished_at": context.downtime.finished_at,
+            }
+        )
 
     def validate(self, plan: MigrationPlan) -> ValidationResult:
         """Executa validacoes sobre o estado atual da migracao."""

@@ -4,7 +4,7 @@
     "clusterName" : "microservices-demo",
     "status" : "ACTIVE",
     "registeredContainerInstancesCount" : 0,
-    "runningTasksCount" : 21,
+    "runningTasksCount" : 27,
     "pendingTasksCount" : 0,
     "activeServicesCount" : 0,
     "settings" : null,

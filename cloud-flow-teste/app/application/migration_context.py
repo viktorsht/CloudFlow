@@ -14,6 +14,10 @@ from app.domain.models.database import DatabaseConnection
 from app.domain.models.dependency import DependencyGraph
 from app.domain.models.deployment import Deployment
 from app.domain.models.migration import MigrationEvent, MigrationRequest
+from app.application.downtime_tracker import DowntimeTracker
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from time import monotonic
 
 
 @dataclass
@@ -51,6 +55,9 @@ class MigrationContext:
     maintenance_enabled: bool = False
     source_was_stopped: bool = False
     events: list[MigrationEvent] = field(default_factory=list)
+    downtime: DowntimeTracker = field(
+        default_factory=DowntimeTracker,
+    )
 
     @property
     def migration_id(self) -> str:
@@ -58,3 +65,35 @@ class MigrationContext:
 
     def add_event(self, event: MigrationEvent) -> None:
         self.events.append(event)
+
+@dataclass
+class DowntimeTracker:
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+
+    _started_monotonic: float | None = field(
+        default=None,
+        repr=False,
+    )
+    _duration_seconds: float | None = field(
+        default=None,
+        repr=False,
+    )
+
+    def start(self) -> None:
+        if self._started_monotonic is not None:
+            return
+
+        self.started_at = datetime.now(timezone.utc)
+        self._started_monotonic = monotonic()
+
+    def stop(self) -> None:
+        if self._started_monotonic is None:
+            return
+
+        self.finished_at = datetime.now(timezone.utc)
+        self._duration_seconds = monotonic() - self._started_monotonic
+
+    @property
+    def duration_seconds(self) -> float | None:
+        return self._duration_seconds
