@@ -1,0 +1,31 @@
+services:
+  # Orquestrador de migracao. Nao cria nem conhece a infraestrutura de
+  # nenhum provedor: nem os microsservicos de origem (projeto
+  # microservices-demo, com seu Floci AWS e Gateway) nem o emulador do
+  # provedor de destino (ex.: Floci-AZ). Ambos sao subidos por fora, em
+  # outros arquivos/projetos, e alcancados pelos endpoints enviados em cada
+  # requisicao (source.endpoint / target.endpoint).
+  migration-manager:
+    build: .
+    ports: ["8000:8000"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
+    networks: [migration-network, destination-network]
+
+networks:
+  migration-network:
+    name: migration-manager-network
+
+  # Rede Docker de um provedor de DESTINO externo (ex.: o projeto floci-az).
+  # "external: true" so entra em uma rede que ja existe -- nao cria nem
+  # gerencia essa infraestrutura. So e necessaria porque o provedor em
+  # questao nao publica a porta do banco no host (ao contrario do Floci AWS,
+  # cujo RDS e alcancado via host.docker.internal); os endpoints HTTP dos
+  # emuladores continuam vindo so do body de cada requisicao.
+  #
+  # Ajuste DESTINATION_NETWORK se a rede do seu destino tiver outro nome
+  # (por padrao, o gerador do floci-az cria a rede "floci-az"):
+  #   DESTINATION_NETWORK=floci-az docker compose up --build
+  destination-network:
+    external: true
+    name: ${DESTINATION_NETWORK:-floci-az}

@@ -1,0 +1,35 @@
+services:
+  floci-az:
+    image: floci/floci-az:latest
+    container_name: floci-az
+
+    ports:
+      - "4577:4577"
+
+    volumes:
+      - ./floci-az-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    environment:
+      FLOCI_AZ_HOSTNAME: floci-az
+      FLOCI_AZ_BASE_URL: http://floci-az:4577
+      FLOCI_AZ_DEFAULT_REGION: eastus
+      FLOCI_AZ_DEFAULT_SUBSCRIPTION_ID: "00000000-0000-0000-0000-000000000000"
+
+      # Mantém o estado do plano de controle entre reinicializações. Os
+      # recursos criados (Container Apps, PostgreSQL) são administrados
+      # pelo próprio Floci-AZ.
+      FLOCI_AZ_STORAGE_MODE: hybrid
+      FLOCI_AZ_STORAGE_PERSISTENT_PATH: /app/data
+
+      # Queremos recursos reais (containers Docker), não apenas metadata.
+      FLOCI_AZ_SERVICES_DOCKER_NETWORK: floci-az
+      FLOCI_AZ_SERVICES_CONTAINER_APPS_MOCKED: "false"
+      FLOCI_AZ_SERVICES_POSTGRES_MOCKED: "false"
+
+    networks:
+      - floci-az
+
+networks:
+  floci-az:
+    name: floci-az

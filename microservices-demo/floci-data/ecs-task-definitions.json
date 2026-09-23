@@ -971,6 +971,170 @@
     "compatibilities" : [ "EC2" ],
     "tags" : { }
   },
+  "000000000000/microservices-demo:8" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/microservices-demo:8",
+    "family" : "microservices-demo",
+    "revision" : 8,
+    "status" : "ACTIVE",
+    "networkMode" : "bridge",
+    "cpu" : null,
+    "memory" : null,
+    "taskRoleArn" : null,
+    "executionRoleArn" : null,
+    "containerDefinitions" : [ {
+      "name" : "gateway",
+      "image" : "microservices-demo/gateway:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8080,
+        "hostPort" : 8080,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "MS1_URI",
+        "value" : "http://host.docker.internal:8081"
+      }, {
+        "name" : "MS2_URI",
+        "value" : "http://host.docker.internal:8082"
+      }, {
+        "name" : "MS3_URI",
+        "value" : "http://host.docker.internal:8083"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    }, {
+      "name" : "ms1",
+      "image" : "microservices-demo/ms1:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8081,
+        "hostPort" : 8081,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "DB_HOST",
+        "value" : "host.docker.internal"
+      }, {
+        "name" : "DB_PORT",
+        "value" : "7001"
+      }, {
+        "name" : "DB_NAME",
+        "value" : "ms1_db"
+      }, {
+        "name" : "DB_USER",
+        "value" : "ms1_user"
+      }, {
+        "name" : "DB_PASSWORD",
+        "value" : "ms1_pass"
+      }, {
+        "name" : "APP_PROVIDER",
+        "value" : "aws"
+      }, {
+        "name" : "APP_MS_NAME",
+        "value" : "ms1"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    }, {
+      "name" : "ms2",
+      "image" : "microservices-demo/ms2:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8082,
+        "hostPort" : 8082,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "DB_HOST",
+        "value" : "host.docker.internal"
+      }, {
+        "name" : "DB_PORT",
+        "value" : "7002"
+      }, {
+        "name" : "DB_NAME",
+        "value" : "ms2_db"
+      }, {
+        "name" : "DB_USER",
+        "value" : "ms2_user"
+      }, {
+        "name" : "DB_PASSWORD",
+        "value" : "ms2_pass"
+      }, {
+        "name" : "APP_PROVIDER",
+        "value" : "aws"
+      }, {
+        "name" : "APP_MS_NAME",
+        "value" : "ms2"
+      }, {
+        "name" : "MS3_URL",
+        "value" : "http://host.docker.internal:8080/ms3/api/process"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    }, {
+      "name" : "ms3",
+      "image" : "microservices-demo/ms3:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8083,
+        "hostPort" : 8083,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "DB_HOST",
+        "value" : "host.docker.internal"
+      }, {
+        "name" : "DB_PORT",
+        "value" : "7003"
+      }, {
+        "name" : "DB_NAME",
+        "value" : "ms3_db"
+      }, {
+        "name" : "DB_USER",
+        "value" : "ms3_user"
+      }, {
+        "name" : "DB_PASSWORD",
+        "value" : "ms3_pass"
+      }, {
+        "name" : "APP_PROVIDER",
+        "value" : "aws"
+      }, {
+        "name" : "APP_MS_NAME",
+        "value" : "ms3"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    } ],
+    "volumes" : [ ],
+    "runtimePlatform" : null,
+    "requiresCompatibilities" : [ ],
+    "compatibilities" : [ "EC2" ],
+    "tags" : { }
+  },
   "000000000000/microservices-demo:7" : {
     "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/microservices-demo:7",
     "family" : "microservices-demo",
@@ -1135,10 +1299,10 @@
     "compatibilities" : [ "EC2" ],
     "tags" : { }
   },
-  "000000000000/floci-bridge-port-probe:1" : {
-    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/floci-bridge-port-probe:1",
-    "family" : "floci-bridge-port-probe",
-    "revision" : 1,
+  "000000000000/ms3:4" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/ms3:4",
+    "family" : "ms3",
+    "revision" : 4,
     "status" : "ACTIVE",
     "networkMode" : "bridge",
     "cpu" : null,
@@ -1146,18 +1310,384 @@
     "taskRoleArn" : null,
     "executionRoleArn" : null,
     "containerDefinitions" : [ {
-      "name" : "gateway",
-      "image" : "microservices-demo/gateway:1.0",
+      "name" : "ms3",
+      "image" : "microservices-demo/ms3:1.0",
       "cpu" : 256,
       "memory" : 512,
       "memoryReservation" : null,
       "essential" : true,
       "portMappings" : [ {
-        "containerPort" : 8080,
-        "hostPort" : 18080,
+        "containerPort" : 8083,
+        "hostPort" : 8083,
         "protocol" : "tcp"
       } ],
-      "environment" : [ ],
+      "environment" : [ {
+        "name" : "DB_HOST",
+        "value" : "host.docker.internal"
+      }, {
+        "name" : "DB_PORT",
+        "value" : "7003"
+      }, {
+        "name" : "DB_NAME",
+        "value" : "ms3_db"
+      }, {
+        "name" : "DB_USER",
+        "value" : "ms3_user"
+      }, {
+        "name" : "DB_PASSWORD",
+        "value" : "ms3_pass"
+      }, {
+        "name" : "APP_PROVIDER",
+        "value" : "aws"
+      }, {
+        "name" : "APP_MS_NAME",
+        "value" : "ms3"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    } ],
+    "volumes" : [ ],
+    "runtimePlatform" : null,
+    "requiresCompatibilities" : [ ],
+    "compatibilities" : [ "EC2" ],
+    "tags" : { }
+  },
+  "000000000000/ms2:5" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/ms2:5",
+    "family" : "ms2",
+    "revision" : 5,
+    "status" : "ACTIVE",
+    "networkMode" : "bridge",
+    "cpu" : null,
+    "memory" : null,
+    "taskRoleArn" : null,
+    "executionRoleArn" : null,
+    "containerDefinitions" : [ {
+      "name" : "ms2",
+      "image" : "microservices-demo/ms2:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8082,
+        "hostPort" : 8082,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "DB_HOST",
+        "value" : "host.docker.internal"
+      }, {
+        "name" : "DB_PORT",
+        "value" : "7002"
+      }, {
+        "name" : "DB_NAME",
+        "value" : "ms2_db"
+      }, {
+        "name" : "DB_USER",
+        "value" : "ms2_user"
+      }, {
+        "name" : "DB_PASSWORD",
+        "value" : "ms2_pass"
+      }, {
+        "name" : "APP_PROVIDER",
+        "value" : "aws"
+      }, {
+        "name" : "APP_MS_NAME",
+        "value" : "ms2"
+      }, {
+        "name" : "MS3_URL",
+        "value" : "http://host.docker.internal:8080/ms3/api/process"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    } ],
+    "volumes" : [ ],
+    "runtimePlatform" : null,
+    "requiresCompatibilities" : [ ],
+    "compatibilities" : [ "EC2" ],
+    "tags" : { }
+  },
+  "000000000000/ms3:3" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/ms3:3",
+    "family" : "ms3",
+    "revision" : 3,
+    "status" : "ACTIVE",
+    "networkMode" : "bridge",
+    "cpu" : null,
+    "memory" : null,
+    "taskRoleArn" : null,
+    "executionRoleArn" : null,
+    "containerDefinitions" : [ {
+      "name" : "ms3",
+      "image" : "microservices-demo/ms3:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8083,
+        "hostPort" : 8083,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "DB_HOST",
+        "value" : "host.docker.internal"
+      }, {
+        "name" : "DB_PORT",
+        "value" : "7003"
+      }, {
+        "name" : "DB_NAME",
+        "value" : "ms3_db"
+      }, {
+        "name" : "DB_USER",
+        "value" : "ms3_user"
+      }, {
+        "name" : "DB_PASSWORD",
+        "value" : "ms3_pass"
+      }, {
+        "name" : "APP_PROVIDER",
+        "value" : "aws"
+      }, {
+        "name" : "APP_MS_NAME",
+        "value" : "ms3"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    } ],
+    "volumes" : [ ],
+    "runtimePlatform" : null,
+    "requiresCompatibilities" : [ ],
+    "compatibilities" : [ "EC2" ],
+    "tags" : { }
+  },
+  "000000000000/ms2:4" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/ms2:4",
+    "family" : "ms2",
+    "revision" : 4,
+    "status" : "ACTIVE",
+    "networkMode" : "bridge",
+    "cpu" : null,
+    "memory" : null,
+    "taskRoleArn" : null,
+    "executionRoleArn" : null,
+    "containerDefinitions" : [ {
+      "name" : "ms2",
+      "image" : "microservices-demo/ms2:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8082,
+        "hostPort" : 8082,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "DB_HOST",
+        "value" : "host.docker.internal"
+      }, {
+        "name" : "DB_PORT",
+        "value" : "7002"
+      }, {
+        "name" : "DB_NAME",
+        "value" : "ms2_db"
+      }, {
+        "name" : "DB_USER",
+        "value" : "ms2_user"
+      }, {
+        "name" : "DB_PASSWORD",
+        "value" : "ms2_pass"
+      }, {
+        "name" : "APP_PROVIDER",
+        "value" : "aws"
+      }, {
+        "name" : "APP_MS_NAME",
+        "value" : "ms2"
+      }, {
+        "name" : "MS3_URL",
+        "value" : "http://host.docker.internal:8080/ms3/api/process"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    } ],
+    "volumes" : [ ],
+    "runtimePlatform" : null,
+    "requiresCompatibilities" : [ ],
+    "compatibilities" : [ "EC2" ],
+    "tags" : { }
+  },
+  "000000000000/ms3:2" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/ms3:2",
+    "family" : "ms3",
+    "revision" : 2,
+    "status" : "ACTIVE",
+    "networkMode" : "bridge",
+    "cpu" : null,
+    "memory" : null,
+    "taskRoleArn" : null,
+    "executionRoleArn" : null,
+    "containerDefinitions" : [ {
+      "name" : "ms3",
+      "image" : "microservices-demo/ms3:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8083,
+        "hostPort" : 8083,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "DB_HOST",
+        "value" : "host.docker.internal"
+      }, {
+        "name" : "DB_PORT",
+        "value" : "7003"
+      }, {
+        "name" : "DB_NAME",
+        "value" : "ms3_db"
+      }, {
+        "name" : "DB_USER",
+        "value" : "ms3_user"
+      }, {
+        "name" : "DB_PASSWORD",
+        "value" : "ms3_pass"
+      }, {
+        "name" : "APP_PROVIDER",
+        "value" : "aws"
+      }, {
+        "name" : "APP_MS_NAME",
+        "value" : "ms3"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    } ],
+    "volumes" : [ ],
+    "runtimePlatform" : null,
+    "requiresCompatibilities" : [ ],
+    "compatibilities" : [ "EC2" ],
+    "tags" : { }
+  },
+  "000000000000/ms2:3" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/ms2:3",
+    "family" : "ms2",
+    "revision" : 3,
+    "status" : "ACTIVE",
+    "networkMode" : "bridge",
+    "cpu" : null,
+    "memory" : null,
+    "taskRoleArn" : null,
+    "executionRoleArn" : null,
+    "containerDefinitions" : [ {
+      "name" : "ms2",
+      "image" : "microservices-demo/ms2:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8082,
+        "hostPort" : 8082,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "DB_HOST",
+        "value" : "host.docker.internal"
+      }, {
+        "name" : "DB_PORT",
+        "value" : "7002"
+      }, {
+        "name" : "DB_NAME",
+        "value" : "ms2_db"
+      }, {
+        "name" : "DB_USER",
+        "value" : "ms2_user"
+      }, {
+        "name" : "DB_PASSWORD",
+        "value" : "ms2_pass"
+      }, {
+        "name" : "APP_PROVIDER",
+        "value" : "aws"
+      }, {
+        "name" : "APP_MS_NAME",
+        "value" : "ms2"
+      }, {
+        "name" : "MS3_URL",
+        "value" : "http://host.docker.internal:8080/ms3/api/process"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    } ],
+    "volumes" : [ ],
+    "runtimePlatform" : null,
+    "requiresCompatibilities" : [ ],
+    "compatibilities" : [ "EC2" ],
+    "tags" : { }
+  },
+  "000000000000/ms1:4" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/ms1:4",
+    "family" : "ms1",
+    "revision" : 4,
+    "status" : "ACTIVE",
+    "networkMode" : "bridge",
+    "cpu" : null,
+    "memory" : null,
+    "taskRoleArn" : null,
+    "executionRoleArn" : null,
+    "containerDefinitions" : [ {
+      "name" : "ms1",
+      "image" : "microservices-demo/ms1:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8081,
+        "hostPort" : 8081,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "DB_HOST",
+        "value" : "host.docker.internal"
+      }, {
+        "name" : "DB_PORT",
+        "value" : "7001"
+      }, {
+        "name" : "DB_NAME",
+        "value" : "ms1_db"
+      }, {
+        "name" : "DB_USER",
+        "value" : "ms1_user"
+      }, {
+        "name" : "DB_PASSWORD",
+        "value" : "ms1_pass"
+      }, {
+        "name" : "APP_PROVIDER",
+        "value" : "aws"
+      }, {
+        "name" : "APP_MS_NAME",
+        "value" : "ms1"
+      } ],
       "secrets" : null,
       "command" : null,
       "entryPoint" : null,
@@ -1213,6 +1743,121 @@
       }, {
         "name" : "APP_MS_NAME",
         "value" : "ms3"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    } ],
+    "volumes" : [ ],
+    "runtimePlatform" : null,
+    "requiresCompatibilities" : [ ],
+    "compatibilities" : [ "EC2" ],
+    "tags" : { }
+  },
+  "000000000000/ms2:2" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/ms2:2",
+    "family" : "ms2",
+    "revision" : 2,
+    "status" : "ACTIVE",
+    "networkMode" : "bridge",
+    "cpu" : null,
+    "memory" : null,
+    "taskRoleArn" : null,
+    "executionRoleArn" : null,
+    "containerDefinitions" : [ {
+      "name" : "ms2",
+      "image" : "microservices-demo/ms2:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8082,
+        "hostPort" : 8082,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "DB_HOST",
+        "value" : "host.docker.internal"
+      }, {
+        "name" : "DB_PORT",
+        "value" : "7002"
+      }, {
+        "name" : "DB_NAME",
+        "value" : "ms2_db"
+      }, {
+        "name" : "DB_USER",
+        "value" : "ms2_user"
+      }, {
+        "name" : "DB_PASSWORD",
+        "value" : "ms2_pass"
+      }, {
+        "name" : "APP_PROVIDER",
+        "value" : "aws"
+      }, {
+        "name" : "APP_MS_NAME",
+        "value" : "ms2"
+      }, {
+        "name" : "MS3_URL",
+        "value" : "http://host.docker.internal:8080/ms3/api/process"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    } ],
+    "volumes" : [ ],
+    "runtimePlatform" : null,
+    "requiresCompatibilities" : [ ],
+    "compatibilities" : [ "EC2" ],
+    "tags" : { }
+  },
+  "000000000000/ms1:3" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/ms1:3",
+    "family" : "ms1",
+    "revision" : 3,
+    "status" : "ACTIVE",
+    "networkMode" : "bridge",
+    "cpu" : null,
+    "memory" : null,
+    "taskRoleArn" : null,
+    "executionRoleArn" : null,
+    "containerDefinitions" : [ {
+      "name" : "ms1",
+      "image" : "microservices-demo/ms1:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8081,
+        "hostPort" : 8081,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "DB_HOST",
+        "value" : "host.docker.internal"
+      }, {
+        "name" : "DB_PORT",
+        "value" : "7001"
+      }, {
+        "name" : "DB_NAME",
+        "value" : "ms1_db"
+      }, {
+        "name" : "DB_USER",
+        "value" : "ms1_user"
+      }, {
+        "name" : "DB_PASSWORD",
+        "value" : "ms1_pass"
+      }, {
+        "name" : "APP_PROVIDER",
+        "value" : "aws"
+      }, {
+        "name" : "APP_MS_NAME",
+        "value" : "ms1"
       } ],
       "secrets" : null,
       "command" : null,
@@ -1285,6 +1930,62 @@
     "compatibilities" : [ "EC2" ],
     "tags" : { }
   },
+  "000000000000/ms1:2" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/ms1:2",
+    "family" : "ms1",
+    "revision" : 2,
+    "status" : "ACTIVE",
+    "networkMode" : "bridge",
+    "cpu" : null,
+    "memory" : null,
+    "taskRoleArn" : null,
+    "executionRoleArn" : null,
+    "containerDefinitions" : [ {
+      "name" : "ms1",
+      "image" : "microservices-demo/ms1:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8081,
+        "hostPort" : 8081,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "DB_HOST",
+        "value" : "host.docker.internal"
+      }, {
+        "name" : "DB_PORT",
+        "value" : "7001"
+      }, {
+        "name" : "DB_NAME",
+        "value" : "ms1_db"
+      }, {
+        "name" : "DB_USER",
+        "value" : "ms1_user"
+      }, {
+        "name" : "DB_PASSWORD",
+        "value" : "ms1_pass"
+      }, {
+        "name" : "APP_PROVIDER",
+        "value" : "aws"
+      }, {
+        "name" : "APP_MS_NAME",
+        "value" : "ms1"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    } ],
+    "volumes" : [ ],
+    "runtimePlatform" : null,
+    "requiresCompatibilities" : [ ],
+    "compatibilities" : [ "EC2" ],
+    "tags" : { }
+  },
   "000000000000/ms1:1" : {
     "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/ms1:1",
     "family" : "ms1",
@@ -1341,10 +2042,177 @@
     "compatibilities" : [ "EC2" ],
     "tags" : { }
   },
+  "000000000000/floci-bridge-port-probe:1" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/floci-bridge-port-probe:1",
+    "family" : "floci-bridge-port-probe",
+    "revision" : 1,
+    "status" : "ACTIVE",
+    "networkMode" : "bridge",
+    "cpu" : null,
+    "memory" : null,
+    "taskRoleArn" : null,
+    "executionRoleArn" : null,
+    "containerDefinitions" : [ {
+      "name" : "gateway",
+      "image" : "microservices-demo/gateway:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8080,
+        "hostPort" : 18080,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    } ],
+    "volumes" : [ ],
+    "runtimePlatform" : null,
+    "requiresCompatibilities" : [ ],
+    "compatibilities" : [ "EC2" ],
+    "tags" : { }
+  },
+  "000000000000/gateway:3" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/gateway:3",
+    "family" : "gateway",
+    "revision" : 3,
+    "status" : "ACTIVE",
+    "networkMode" : "bridge",
+    "cpu" : null,
+    "memory" : null,
+    "taskRoleArn" : null,
+    "executionRoleArn" : null,
+    "containerDefinitions" : [ {
+      "name" : "gateway",
+      "image" : "microservices-demo/gateway:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8080,
+        "hostPort" : 8080,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "MS1_URI",
+        "value" : "http://host.docker.internal:8081"
+      }, {
+        "name" : "MS2_URI",
+        "value" : "http://host.docker.internal:8082"
+      }, {
+        "name" : "MS3_URI",
+        "value" : "http://host.docker.internal:8083"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    } ],
+    "volumes" : [ ],
+    "runtimePlatform" : null,
+    "requiresCompatibilities" : [ ],
+    "compatibilities" : [ "EC2" ],
+    "tags" : { }
+  },
+  "000000000000/gateway:4" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/gateway:4",
+    "family" : "gateway",
+    "revision" : 4,
+    "status" : "ACTIVE",
+    "networkMode" : "bridge",
+    "cpu" : null,
+    "memory" : null,
+    "taskRoleArn" : null,
+    "executionRoleArn" : null,
+    "containerDefinitions" : [ {
+      "name" : "gateway",
+      "image" : "microservices-demo/gateway:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8080,
+        "hostPort" : 8080,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "MS1_URI",
+        "value" : "http://host.docker.internal:8081"
+      }, {
+        "name" : "MS2_URI",
+        "value" : "http://host.docker.internal:8082"
+      }, {
+        "name" : "MS3_URI",
+        "value" : "http://host.docker.internal:8083"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    } ],
+    "volumes" : [ ],
+    "runtimePlatform" : null,
+    "requiresCompatibilities" : [ ],
+    "compatibilities" : [ "EC2" ],
+    "tags" : { }
+  },
   "000000000000/gateway:1" : {
     "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/gateway:1",
     "family" : "gateway",
     "revision" : 1,
+    "status" : "ACTIVE",
+    "networkMode" : "bridge",
+    "cpu" : null,
+    "memory" : null,
+    "taskRoleArn" : null,
+    "executionRoleArn" : null,
+    "containerDefinitions" : [ {
+      "name" : "gateway",
+      "image" : "microservices-demo/gateway:1.0",
+      "cpu" : 256,
+      "memory" : 512,
+      "memoryReservation" : null,
+      "essential" : true,
+      "portMappings" : [ {
+        "containerPort" : 8080,
+        "hostPort" : 8080,
+        "protocol" : "tcp"
+      } ],
+      "environment" : [ {
+        "name" : "MS1_URI",
+        "value" : "http://host.docker.internal:8081"
+      }, {
+        "name" : "MS2_URI",
+        "value" : "http://host.docker.internal:8082"
+      }, {
+        "name" : "MS3_URI",
+        "value" : "http://host.docker.internal:8083"
+      } ],
+      "secrets" : null,
+      "command" : null,
+      "entryPoint" : null,
+      "mountPoints" : [ ],
+      "logConfiguration" : null
+    } ],
+    "volumes" : [ ],
+    "runtimePlatform" : null,
+    "requiresCompatibilities" : [ ],
+    "compatibilities" : [ "EC2" ],
+    "tags" : { }
+  },
+  "000000000000/gateway:2" : {
+    "taskDefinitionArn" : "arn:aws:ecs:us-east-1:000000000000:task-definition/gateway:2",
+    "family" : "gateway",
+    "revision" : 2,
     "status" : "ACTIVE",
     "networkMode" : "bridge",
     "cpu" : null,

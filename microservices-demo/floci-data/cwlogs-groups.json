@@ -31,6 +31,14 @@
     "kmsKeyId" : null,
     "tags" : { }
   },
+  "000000000000/us-east-1::/floci/ui" : {
+    "logGroupName" : "/floci/ui",
+    "createdTime" : 1790129439089,
+    "retentionInDays" : null,
+    "deletionProtectionEnabled" : false,
+    "kmsKeyId" : null,
+    "tags" : { }
+  },
   "000000000000/us-east-1::/ecs/ms2" : {
     "logGroupName" : "/ecs/ms2",
     "createdTime" : 1789785824406,

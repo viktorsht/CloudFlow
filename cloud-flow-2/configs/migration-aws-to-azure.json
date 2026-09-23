@@ -1,9 +1,0 @@
-{
-  "migration_id": "migration-ms2-aws-to-azure-001", "mode": "stop_and_migrate",
-  "microservice": {"id": "ms2", "name": "ms2-composite", "container": {"image": "microservices-demo/ms2:1.0", "port": 8082, "environment": {"APP_PROVIDER": "azure", "APP_MS_NAME": "ms2", "MS3_URL": "http://gateway:8080/ms3/api/process"}}, "health_check": {"path": "/health", "port": 8082}, "dependencies": [{"service_id": "ms3", "protocol": "http", "port": 8083, "required": true}]},
-  "source": {"provider": "aws", "region": "us-east-1", "environment": "source", "endpoint": "http://floci:4566", "credentials": {"access_key_id": "test", "secret_access_key": "test"}, "runtime_options": {"cluster": "microservices-demo", "service_id": "ms2", "host_port": "8082", "published_host": "host.docker.internal"}},
-  "target": {"provider": "azure", "region": "eastus", "environment": "target", "endpoint": "http://floci-az:4577", "credentials": {"tenant_id": "local", "client_id": "local", "client_secret": "local", "subscription_id": "00000000-0000-0000-0000-000000000000"}, "runtime_options": {"subscription_id": "00000000-0000-0000-0000-000000000000", "resource_group": "floci-migrations", "managed_environment": "floci-migrations", "container_app_name": "ms2-azure", "service_id": "ms2"}},
-  "source_workload": {"resource_id": "REPLACE_WITH_ECS_TASK_ARN", "container_name": "ms2", "port": 8082},
-  "ingress": {"gateway_admin_url": "http://gateway:8080/actuator/gateway", "route_id": "ms2-route", "public_path": "/ms2/**"},
-  "data": {"type": "postgresql", "source": {"host": "host.docker.internal", "port": 5432, "database": "ms2_db", "resource_id": "ms2-db", "username": "ms2_user", "password": "ms2_pass"}, "target": {"host": "host.docker.internal", "port": 5432, "database": "ms2_db", "resource_id": "ms2-azure-db", "username": "ms2_user", "password": "ms2_pass"}}
-}
