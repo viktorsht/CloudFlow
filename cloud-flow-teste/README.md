@@ -123,6 +123,80 @@ desfazer a migração de dados.
 As transições são controladas explicitamente pela `MigrationStateMachine`
 — transições fora do fluxo definido levantam `InvalidStateTransitionError`.
 
+## Downtime mínimo (`"mode": "pre_copy_replication"`)
+
+Em `continuous` e `stop_and_migrate`, o `pg_dump`/`pg_restore` completo roda
+dentro da janela de manutenção, e o downtime cresce com o tamanho do banco.
+A `PreCopyReplicationStrategy` copia e sincroniza os dados com a origem
+atendendo tráfego normalmente. A manutenção só é ligada para drenar o delta
+final.
+
+```
+PREPARING → PREPARED
+  → BASE_COPY_IN_PROGRESS → BASE_COPY_DONE          (origem no ar)
+  → DEPLOYING_TARGET → TARGET_DEPLOYED → VALIDATING_TARGET → TARGET_VALID
+  → REPLICATING → REPLICATION_SYNCED                (origem no ar)
+  → QUIESCING_SOURCE → MIGRATING_DATA → DATA_MIGRATED   (manutenção ligada)
+  → REDIRECTING_TRAFFIC → TRAFFIC_REDIRECTED → VALIDATING_APPLICATION
+  → MIGRATION_COMPLETED → SOURCE_CLEANUP → COMPLETED
+```
+
+1. **Cópia base.** Cria uma `PUBLICATION` na origem e um slot lógico com
+   `EXPORT_SNAPSHOT`. O `pg_dump` roda nesse snapshot, então a cópia termina
+   exatamente onde a replicação começa, sem perder nem duplicar as escritas
+   feitas durante o dump.
+2. **Replicação.** Cria a `SUBSCRIPTION` no destino com `copy_data=false`
+   usando o slot existente. Depois acompanha o lag em `pg_replication_slots`
+   até ele ficar abaixo de `lag_threshold_bytes`. Se não convergir em
+   `sync_timeout_seconds`, a migração falha **antes** de mexer no tráfego.
+3. **Corte.** Liga a manutenção e espera o destino confirmar a LSN final da
+   origem. Em seguida sincroniza as sequences (a replicação lógica não as
+   propaga), remove subscription, slot e publication, valida contagens e
+   troca a rota.
+
+Em caso de falha, a compensação também remove os artefatos de replicação
+**antes** de apagar o banco de destino: um slot esquecido retém WAL na origem
+indefinidamente.
+
+Pré-requisitos:
+
+- origem com `wal_level=logical` e `max_replication_slots > 0`;
+- usuário da origem com `REPLICATION` (ou `rds_replication` no RDS);
+- toda tabela com `PRIMARY KEY` ou `REPLICA IDENTITY`. Sem isso, UPDATE e
+  DELETE falhariam na origem assim que a tabela entrasse na publication;
+- usuário do destino com permissão para `CREATE SUBSCRIPTION`
+  (superusuário ou `pg_create_subscription` no PG16+);
+- banco de destino alcançando a origem pela rede. Use
+  `replication.publisher_host`/`publisher_port` quando o host visto pelo
+  destino for diferente de `data.source.host`;
+- nenhuma DDL na origem durante a migração, porque DDL não é replicada.
+
+**No Floci:** o RDS sobe com `wal_level=replica`, e o proxy TCP dele (portas
+7001–7099) não repassa o protocolo de replicação, que o manager usa para
+criar o slot e a subscription usa para puxar as alterações. Antes da
+primeira migração de cada microsserviço, rode:
+
+```bash
+./scripts/enable-logical-replication.sh ms2   # liga wal_level=logical e expõe ms2-db-direct:5432 na rede floci-az
+```
+
+Depois, envie `"replication": {"publisher_host": "ms2-db-direct", "publisher_port": 5432}`
+no body (já está em `configs/migration-aws-to-azure-precopy.json`). Sem isso,
+a migração falha em `PREPARING` com `wal_level=replica (requer logical)`, ou
+na cópia base ao criar o slot.
+
+Os pré-requisitos são verificados em `PREPARING`, antes de qualquer
+alteração. Parâmetros opcionais em `"replication"`: `lag_threshold_bytes`,
+`sync_timeout_seconds`, `drain_timeout_seconds`, `poll_interval_seconds` e
+`base_copy_timeout_seconds`. O exemplo completo está em
+`configs/migration-aws-to-azure-precopy.json`, que é executado pelo fluxo
+`POST /migrations` + `POST /migrations/{id}/execute`, ou por
+`POST /migrate/pre-copy-replication` (mesmo body de `/migrate/stop-and-migrate`,
+com `replication` opcional).
+
+As três estratégias informam `downtime_seconds`, medido do início da
+manutenção até a validação da aplicação no destino.
+
 ## Suporte multi-cloud: AWS ↔ Azure
 
 O `MigrationManager` e a `ContinuousMigrationStrategy` **nunca** decidem com
@@ -246,6 +320,22 @@ curl -X POST http://localhost:8000/migrate/stop-and-migrate \
   "destination": "azure",
   "status": "PENDING"
 }
+```
+
+Para downtime mínimo, envie **o mesmo body** para
+`POST /migrate/pre-copy-replication`. A rota força a estratégia
+`pre_copy_replication` (ver "Downtime mínimo" acima): a origem continua no ar
+durante a cópia e a sincronização, e só o delta final roda com a manutenção
+ligada. As respostas, o acompanhamento por `GET /migrate/{id}/status` e a
+regra de uma migração por microsserviço são os mesmos das duas rotas. O
+bloco `replication` é opcional; no Floci ele é necessário (ver os
+pré-requisitos em "Downtime mínimo").
+
+```bash
+./scripts/enable-logical-replication.sh ms2
+curl -X POST http://localhost:8000/migrate/pre-copy-replication \
+  -H "Content-Type: application/json" \
+  -d @configs/migration-aws-to-azure-precopy.json
 ```
 
 ```bash
@@ -416,7 +506,7 @@ Cobertura atual (23 testes):
 | `test_migration_request.py`      | `MigrationRequest` válida é aceita; provider ausente, imagem ausente, porta inválida, target ausente e dados inválidos são rejeitados |
 | `test_dependency_graph.py`       | `get_dependencies`, `get_dependents` e `validate_dependencies` do `DependencyGraph` |
 | `test_dependency_manager.py`     | Construção do grafo a partir de um `MicroserviceConfig` |
-| `tests/api/test_migrate_api.py`  | `POST /migrate/stop-and-migrate` responde 202 na hora e migra em segundo plano; status até `COMPLETED`/`FAILED`; falha desfeita; microsserviços diferentes em paralelo e o mesmo em série (409); body incompleto (422) |
+| `tests/api/test_migrate_api.py`  | `POST /migrate/stop-and-migrate` responde 202 na hora e migra em segundo plano; status até `COMPLETED`/`FAILED`; falha desfeita; microsserviços diferentes em paralelo e o mesmo em série (409); body incompleto (422); `POST /migrate/pre-copy-replication` com o mesmo body força a nova estratégia |
 | `test_migration_state_machine.py`| Transições válidas/inválidas de `MigrationState`, incluindo fluxo de falha e rollback |
 | `test_migration_manager.py`      | Ordem de execução das etapas com providers mockados; rollback após falha simulada durante `REDIRECTING_TRAFFIC` |
 | `test_provider_factory.py`       | `ProviderFactory` resolve as implementações corretas por tipo de provedor (AWS **e Azure**) |

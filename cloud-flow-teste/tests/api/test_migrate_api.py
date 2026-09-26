@@ -14,9 +14,10 @@ from fastapi.testclient import TestClient
 from app.api.controllers import migration_controller as controller
 from app.application.migration_manager import MigrationManager
 from app.domain.enums.provider_type import HealthStatus
-from app.domain.models.data import DataMigrationResult, ValidationResult
+from app.domain.models.data import DataMigrationResult, ReplicationLagResult, ValidationResult
 from app.domain.models.database import DatabaseConnection
 from app.domain.models.deployment import Deployment, HealthCheckResult
+from app.domain.models.migration import MigrationMode
 from app.infrastructure.providers.factory import ProviderFactory
 from app.main import app
 
@@ -28,6 +29,8 @@ class Env:
     def __init__(self) -> None:
         self.log: list[str] = []
         self.fail_data = False
+        self.modes: list = []
+        self.replication_options: list = []
         self.gate = threading.Event()
         self.gate.set()
 
@@ -89,6 +92,28 @@ class FakeData:
     def rollback(self, target):
         pass
 
+    # Interface de replicacao, usada por /migrate/pre-copy-replication.
+    def prepare_source_connection(self, source):
+        pass
+
+    def base_copy(self, source, target, replication_name, options):
+        self.env.log.append("data:base_copy")
+        self.env.replication_options.append(options)
+        return DataMigrationResult(success=True)
+
+    def start_replication(self, source, target, replication_name, options):
+        self.env.log.append("replication:start")
+
+    def wait_until_synced(self, source, replication_name, options):
+        return ReplicationLagResult(lag_bytes=0, slot_active=True, synced=True)
+
+    def drain_final_delta(self, source, target, replication_name, options):
+        self.env.log.append("data:drain")
+        return DataMigrationResult(success=not self.env.fail_data)
+
+    def stop_replication(self, source, target, replication_name):
+        self.env.log.append("replication:stop")
+
 
 class FakeTraffic:
     def __init__(self, env: Env) -> None:
@@ -137,7 +162,8 @@ class FakeFactory(ProviderFactory):
     def create_traffic_provider(self, ingress):
         return FakeTraffic(self.env)
 
-    def create_data_provider(self, engine_type):
+    def create_data_provider(self, engine_type, mode=None):
+        self.env.modes.append(mode)
         return FakeData(self.env)
 
 
@@ -321,3 +347,62 @@ def test_unsupported_provider_is_rejected_with_422():
     assert response.status_code == 422
     assert "nao suportado" in response.json()["detail"]
     assert not controller._active
+
+
+def test_pre_copy_replication_accepts_same_body_and_forces_its_strategy(client, env):
+    body = payload(mode="stop_and_migrate")  # campo extra e ignorado, como em /stop-and-migrate
+
+    response = client.post("/migrate/pre-copy-replication", json=body)
+
+    assert response.status_code == 202
+    migration_id = response.json()["migrationId"]
+    done = wait_for(client, migration_id, finished)
+    assert done["status"] == "COMPLETED", done
+    assert env.modes == [MigrationMode.PRE_COPY_REPLICATION]
+    # Copia e sincronizacao antes da manutencao; so o delta final dentro dela.
+    assert env.log == [
+        "target-db:provision", "data:base_copy", "target:deploy", "replication:start",
+        "maintenance:on", "data:drain", "replication:stop",
+        "route:redirect", "maintenance:off", "source:stop",
+    ]
+    assert done["downtime_seconds"] is not None
+
+
+def test_pre_copy_replication_failure_in_cutover_is_reported(client, env):
+    env.fail_data = True
+
+    migration_id = client.post("/migrate/pre-copy-replication", json=payload()).json()["migrationId"]
+    done = wait_for(client, migration_id, finished)
+
+    assert done["status"] == "FAILED"
+    assert "delta final" in done["error"]
+    assert {"route:restore", "maintenance:off", "replication:stop", "target:remove", "target-db:remove"} <= set(env.log)
+
+
+def test_pre_copy_replication_and_stop_and_migrate_share_the_same_service_lock(client, env):
+    env.gate.clear()
+
+    first = client.post("/migrate/stop-and-migrate", json=payload("ms2"))
+    concurrent = client.post("/migrate/pre-copy-replication", json=payload("ms2"))
+
+    assert first.status_code == 202
+    assert concurrent.status_code == 409
+    env.gate.set()
+    wait_for(client, first.json()["migrationId"], finished)
+
+
+def test_pre_copy_replication_accepts_optional_replication_options(client, env):
+    body = payload(replication={"publisher_host": "ms2-db-direct", "publisher_port": 5432, "sync_timeout_seconds": 30})
+
+    migration_id = client.post("/migrate/pre-copy-replication", json=body).json()["migrationId"]
+
+    assert wait_for(client, migration_id, finished)["status"] == "COMPLETED"
+    [options] = env.replication_options
+    assert (options.publisher_host, options.publisher_port, options.sync_timeout_seconds) == ("ms2-db-direct", 5432, 30)
+
+
+def test_pre_copy_replication_rejects_invalid_replication_options(client):
+    response = client.post("/migrate/pre-copy-replication", json=payload(replication={"poll_interval_seconds": 0}))
+
+    assert response.status_code == 422
+    assert not controller._plans

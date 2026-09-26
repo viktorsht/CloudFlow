@@ -11,7 +11,7 @@
     "allocatedStorage" : 20,
     "status" : "AVAILABLE",
     "endpoint" : {
-      "address" : "172.20.0.2",
+      "address" : "172.19.0.2",
       "port" : 7001
     },
     "iamDatabaseAuthenticationEnabled" : false,
@@ -47,8 +47,8 @@
     "dockerVolumeName" : "floci-rds-db-1B65434ACAA343588E039110-ea8058",
     "volumeId" : "ea8058",
     "containerStorageResourceId" : "db-1B65434ACAA343588E039110",
-    "containerId" : "a64118ede3845c853ddd7ead20f03bd85837f2605eb3b5864851484367aa91bd",
-    "containerHost" : "172.20.0.3",
+    "containerId" : "2312b67838429f166dc4db64f63d653ebf588e35ecb2d23286393fd82e4f2d41",
+    "containerHost" : "172.19.0.3",
     "containerPort" : 5432
   },
   "000000000000/us-east-1::ms2-db" : {
@@ -63,7 +63,7 @@
     "allocatedStorage" : 20,
     "status" : "AVAILABLE",
     "endpoint" : {
-      "address" : "172.20.0.2",
+      "address" : "172.19.0.2",
       "port" : 7002
     },
     "iamDatabaseAuthenticationEnabled" : false,
@@ -99,8 +99,8 @@
     "dockerVolumeName" : "floci-rds-db-C8B8174AC0914BC3A0F13F9D-f0e7c6",
     "volumeId" : "f0e7c6",
     "containerStorageResourceId" : "db-C8B8174AC0914BC3A0F13F9D",
-    "containerId" : "9e9df459fd959090259258053926f165616cc416c91879f1b524d2b6a91eea92",
-    "containerHost" : "172.20.0.4",
+    "containerId" : "6dfbb89dd226ce6b49c2711b991254e59e418524936e1b06b2a2ed26be7e984b",
+    "containerHost" : "172.19.0.4",
     "containerPort" : 5432
   },
   "000000000000/us-east-1::ms3-db" : {
@@ -115,7 +115,7 @@
     "allocatedStorage" : 20,
     "status" : "AVAILABLE",
     "endpoint" : {
-      "address" : "172.20.0.2",
+      "address" : "172.19.0.2",
       "port" : 7003
     },
     "iamDatabaseAuthenticationEnabled" : false,
@@ -151,8 +151,8 @@
     "dockerVolumeName" : "floci-rds-db-2DB2D946BC864417AA6197E1-f2001c",
     "volumeId" : "f2001c",
     "containerStorageResourceId" : "db-2DB2D946BC864417AA6197E1",
-    "containerId" : "78886c2771dde16dde7d05af00d40732faf4e2c1824c90e35f767decab529738",
-    "containerHost" : "172.20.0.5",
+    "containerId" : "b8a111b6f55aa513a05ede641749fc26a40480b59af2e5094342721f536e232d",
+    "containerHost" : "172.19.0.5",
     "containerPort" : 5432
   }
 }

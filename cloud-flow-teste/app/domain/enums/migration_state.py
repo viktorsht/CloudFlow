@@ -24,6 +24,11 @@ class MigrationState(str, Enum):
     FAILED = "failed"
     ROLLING_BACK = "rolling_back"
     ROLLED_BACK = "rolled_back"
+    # Estados exclusivos da estrategia pre_copy_replication.
+    BASE_COPY_IN_PROGRESS = "base_copy_in_progress"
+    BASE_COPY_DONE = "base_copy_done"
+    REPLICATING = "replicating"
+    REPLICATION_SYNCED = "replication_synced"
 
 
 # Transicoes validas do fluxo principal (feliz) + falha a partir de qualquer
@@ -53,6 +58,17 @@ _HAPPY_PATH: list[tuple[MigrationState, MigrationState]] = [
     (MigrationState.SOURCE_CLEANUP, MigrationState.COMPLETED),
 ]
 
+# Pre-copy + replicacao logica: copia base e sincronizacao com a origem no ar;
+# o corte reaproveita QUIESCING_SOURCE -> MIGRATING_DATA do fluxo principal.
+_PRE_COPY_REPLICATION_PATH: list[tuple[MigrationState, MigrationState]] = [
+    (MigrationState.PREPARED, MigrationState.BASE_COPY_IN_PROGRESS),
+    (MigrationState.BASE_COPY_IN_PROGRESS, MigrationState.BASE_COPY_DONE),
+    (MigrationState.BASE_COPY_DONE, MigrationState.DEPLOYING_TARGET),
+    (MigrationState.TARGET_VALID, MigrationState.REPLICATING),
+    (MigrationState.REPLICATING, MigrationState.REPLICATION_SYNCED),
+    (MigrationState.REPLICATION_SYNCED, MigrationState.QUIESCING_SOURCE),
+]
+
 # Estados "em andamento" a partir dos quais uma falha pode ocorrer.
 _FAILABLE_STATES: list[MigrationState] = [
     MigrationState.PREPARING,
@@ -65,6 +81,8 @@ _FAILABLE_STATES: list[MigrationState] = [
     MigrationState.REDIRECTING_TRAFFIC,
     MigrationState.VALIDATING_APPLICATION,
     MigrationState.SOURCE_CLEANUP,
+    MigrationState.BASE_COPY_IN_PROGRESS,
+    MigrationState.REPLICATING,
 ]
 
 _FAILURE_PATH: list[tuple[MigrationState, MigrationState]] = [
@@ -77,7 +95,7 @@ _ROLLBACK_PATH: list[tuple[MigrationState, MigrationState]] = [
 ]
 
 VALID_TRANSITIONS: dict[MigrationState, set[MigrationState]] = {}
-for _from, _to in [*_HAPPY_PATH, *_FAILURE_PATH, *_ROLLBACK_PATH]:
+for _from, _to in [*_HAPPY_PATH, *_PRE_COPY_REPLICATION_PATH, *_FAILURE_PATH, *_ROLLBACK_PATH]:
     VALID_TRANSITIONS.setdefault(_from, set()).add(_to)
 
 

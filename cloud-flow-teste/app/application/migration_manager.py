@@ -51,17 +51,16 @@ class MigrationManager:
         if strategy is None:
             # Imports locais evitam dependencias circulares entre aplicacao e contratos.
             from app.application.strategies.continuous_migration_strategy import ContinuousMigrationStrategy
+            from app.application.strategies.pre_copy_replication_strategy import PreCopyReplicationStrategy
             from app.application.strategies.stop_and_migrate_strategy import StopAndMigrateStrategy
             self._strategies: dict[MigrationMode, MigrationStrategy] = {
                 MigrationMode.CONTINUOUS: ContinuousMigrationStrategy(),
                 MigrationMode.STOP_AND_MIGRATE: StopAndMigrateStrategy(),
+                MigrationMode.PRE_COPY_REPLICATION: PreCopyReplicationStrategy(),
             }
         else:
             # Mantem a injecao de estrategia usada por consumidores e testes.
-            self._strategies = {
-                MigrationMode.CONTINUOUS: strategy,
-                MigrationMode.STOP_AND_MIGRATE: strategy,
-            }
+            self._strategies = {mode: strategy for mode in MigrationMode}
         # Contextos ficam em memoria por processo; uma implementacao real
         # poderia persisti-los em um repositorio (ver infrastructure/persistence).
         self._contexts: dict[str, MigrationContext] = {}
@@ -74,7 +73,7 @@ class MigrationManager:
 
         source_bundle = self._build_provider_bundle(request.source.provider, request.source)
         target_bundle = self._build_provider_bundle(request.target.provider, request.target)
-        data_provider = self._provider_factory.create_data_provider(request.data.type)
+        data_provider = self._provider_factory.create_data_provider(request.data.type, request.mode)
         if request.ingress is None:
             raise ValueError("ingress e obrigatorio para migracao efetiva via Gateway")
         traffic_provider = self._provider_factory.create_traffic_provider(request.ingress)

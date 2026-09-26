@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.domain.enums.provider_type import DataEngineType
 
@@ -49,6 +49,17 @@ class DataMigrationResult(BaseModel):
     downtime_seconds: float | None = None
     downtime_started_at: datetime | None = None
     downtime_finished_at: datetime | None = None
+
+
+class ReplicationLagResult(BaseModel):
+    """Medicao do atraso da replicacao logica origem -> destino."""
+
+    lag_bytes: int | None = Field(
+        default=None, description="WAL ainda nao confirmado pelo destino; None se o slot nao existe."
+    )
+    slot_active: bool = False
+    synced: bool = False
+    measured_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ValidationResult(BaseModel):

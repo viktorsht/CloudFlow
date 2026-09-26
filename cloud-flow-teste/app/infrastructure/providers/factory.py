@@ -7,7 +7,7 @@ from app.domain.contracts.database_provider import DatabaseProvider
 from app.domain.contracts.traffic_provider import TrafficProvider
 from app.domain.contracts.validation_provider import ValidationProvider
 from app.domain.enums.provider_type import CloudProviderType, DataEngineType
-from app.domain.models.migration import IngressConfig
+from app.domain.models.migration import IngressConfig, MigrationMode
 from app.domain.models.provider import ProviderConfig
 
 
@@ -49,8 +49,13 @@ class ProviderFactory:
             return AzureValidationProvider(config)
         raise UnsupportedProviderError(f"Validation provider nao suportado: {config.provider}")
 
-    def create_data_provider(self, engine_type: DataEngineType) -> DataMigrationProvider:
+    def create_data_provider(
+        self, engine_type: DataEngineType, mode: MigrationMode = MigrationMode.CONTINUOUS
+    ) -> DataMigrationProvider:
         if engine_type is not DataEngineType.POSTGRESQL:
             raise UnsupportedProviderError("Esta entrega suporta apenas PostgreSQL")
+        if mode is MigrationMode.PRE_COPY_REPLICATION:
+            from app.infrastructure.providers.postgres_replication_data import PostgreSQLReplicationDataMigrationProvider
+            return PostgreSQLReplicationDataMigrationProvider()
         from app.infrastructure.providers.postgres_data import PostgreSQLDataMigrationProvider
         return PostgreSQLDataMigrationProvider()

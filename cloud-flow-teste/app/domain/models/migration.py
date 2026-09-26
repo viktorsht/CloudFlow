@@ -36,6 +36,37 @@ class IngressConfig(BaseModel):
 class MigrationMode(str, Enum):
     CONTINUOUS = "continuous"
     STOP_AND_MIGRATE = "stop_and_migrate"
+    PRE_COPY_REPLICATION = "pre_copy_replication"
+
+
+class ReplicationOptions(BaseModel):
+    """Parametros da estrategia pre_copy_replication (ignorados pelas demais)."""
+
+    lag_threshold_bytes: int = Field(
+        default=64 * 1024, ge=0,
+        description="Lag maximo (bytes de WAL) para considerar a replicacao sincronizada.",
+    )
+    sync_timeout_seconds: float = Field(
+        default=600, gt=0,
+        description="Tempo maximo para o lag convergir; estourar falha antes de tocar no trafego.",
+    )
+    drain_timeout_seconds: float = Field(
+        default=60, gt=0,
+        description="Tempo maximo para drenar o delta final com a manutencao ligada.",
+    )
+    poll_interval_seconds: float = Field(default=1.0, gt=0)
+    base_copy_timeout_seconds: float = Field(default=3600, gt=0)
+    publisher_host: str | None = Field(
+        default=None,
+        description=(
+            "Endereco direto do PostgreSQL de origem para as conexoes de replicacao "
+            "(criacao do slot pelo manager e subscription no destino). Necessario quando "
+            "data.source passa por proxy que nao repassa o protocolo de replicacao, como o "
+            "do RDS do Floci, ou quando o destino ve a origem por outro host. "
+            "Padrao: host resolvido de data.source."
+        ),
+    )
+    publisher_port: int | None = Field(default=None, gt=0, lt=65536)
 
 
 class MigrationRequest(BaseModel):
@@ -53,6 +84,7 @@ class MigrationRequest(BaseModel):
     data: DataMigrationConfig
     source_workload: WorkloadReference | None = None
     ingress: IngressConfig | None = None
+    replication: ReplicationOptions = Field(default_factory=ReplicationOptions)
 
 
 class MigrationEvent(BaseModel):

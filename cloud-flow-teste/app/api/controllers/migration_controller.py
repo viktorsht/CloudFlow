@@ -20,6 +20,7 @@ from app.domain.models.migration import (
     MigrationPlan,
     MigrationRequest,
     MigrationResult,
+    ReplicationOptions,
     WorkloadReference,
 )
 from app.domain.models.provider import ProviderConfig
@@ -159,6 +160,7 @@ def _require_plan(migration_id: str):
 # ---------------------------------------------------------------------------
 # API assincrona por microsservico:
 #   POST /migrate/stop-and-migrate   aceita e executa em segundo plano
+#   POST /migrate/pre-copy-replication   idem, com copia base + replicacao
 #   GET  /migrate/{id}/status        acompanhamento ate COMPLETED ou FAILED
 #
 # Cada requisicao migra UM microsservico, com todos os dados no proprio body.
@@ -199,10 +201,12 @@ class StopAndMigrateRequest(BaseModel):
     source_workload: WorkloadReference
     ingress: IngressConfig
 
-    def to_migration_request(self, migration_id: str) -> MigrationRequest:
+    def to_migration_request(
+        self, migration_id: str, mode: MigrationMode = MigrationMode.STOP_AND_MIGRATE
+    ) -> MigrationRequest:
         return MigrationRequest(
             migration_id=migration_id,
-            mode=MigrationMode.STOP_AND_MIGRATE,
+            mode=mode,
             microservice=self.microservice,
             source=self.source,
             target=self.target,
@@ -210,6 +214,19 @@ class StopAndMigrateRequest(BaseModel):
             source_workload=self.source_workload,
             ingress=self.ingress,
         )
+
+
+class PreCopyReplicationRequest(StopAndMigrateRequest):
+    """Body de POST /migrate/pre-copy-replication: o mesmo de /stop-and-migrate,
+    mais ``replication`` opcional (ver ReplicationOptions)."""
+
+    replication: ReplicationOptions = Field(default_factory=ReplicationOptions)
+
+    def to_migration_request(
+        self, migration_id: str, mode: MigrationMode = MigrationMode.PRE_COPY_REPLICATION
+    ) -> MigrationRequest:
+        request = super().to_migration_request(migration_id, mode)
+        return request.model_copy(update={"replication": self.replication})
 
 
 class MigrationSummary(BaseModel):
@@ -233,11 +250,29 @@ def start_stop_and_migrate(
     body: StopAndMigrateRequest, manager: MigrationManager = Depends(get_manager)
 ) -> MigrationSummary:
     """Aceita a migracao, responde na hora e executa stop-and-migrate em segundo plano."""
+    return _start_async_migration(body, manager, MigrationMode.STOP_AND_MIGRATE)
+
+
+@migrate_router.post("/pre-copy-replication", status_code=202, response_model=MigrationSummary)
+def start_pre_copy_replication(
+    body: PreCopyReplicationRequest, manager: MigrationManager = Depends(get_manager)
+) -> MigrationSummary:
+    """Mesmo body de /stop-and-migrate, executado com copia base + replicacao logica.
+
+    A origem segue atendendo durante a copia e a sincronizacao; a manutencao
+    so cobre a drenagem do delta final. ``replication`` e opcional.
+    """
+    return _start_async_migration(body, manager, MigrationMode.PRE_COPY_REPLICATION)
+
+
+def _start_async_migration(
+    body: StopAndMigrateRequest, manager: MigrationManager, mode: MigrationMode
+) -> MigrationSummary:
     migration_id = body.migration_id or str(uuid4())
     if migration_id in _plans:
         raise HTTPException(status_code=409, detail=f"migration_id '{migration_id}' ja existe")
     try:
-        plan = manager.prepare(body.to_migration_request(migration_id))
+        plan = manager.prepare(body.to_migration_request(migration_id, mode))
     except (ValueError, RuntimeError, UnsupportedProviderError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 

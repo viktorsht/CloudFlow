@@ -9,7 +9,7 @@ from app.domain.contracts.database_provider import DatabaseProvider
 from app.domain.contracts.traffic_provider import TrafficProvider
 from app.domain.contracts.validation_provider import ValidationProvider
 from app.domain.enums.migration_state import MigrationState
-from app.domain.models.data import DataMigrationResult
+from app.domain.models.data import DataMigrationResult, ReplicationLagResult
 from app.domain.models.database import DatabaseConnection
 from app.domain.models.dependency import DependencyGraph
 from app.domain.models.deployment import Deployment
@@ -54,6 +54,10 @@ class MigrationContext:
     original_route: str | None = None
     maintenance_enabled: bool = False
     source_was_stopped: bool = False
+    # pre_copy_replication: artefatos de replicacao existem desde a copia base.
+    replication_started: bool = False
+    replication_stopped: bool = False
+    replication_lag: ReplicationLagResult | None = None
     events: list[MigrationEvent] = field(default_factory=list)
     downtime: DowntimeTracker = field(
         default_factory=DowntimeTracker,
