@@ -493,6 +493,47 @@ o que muda para `localhost` se você rodar o manager via `uvicorn` direto no
 host, fora do Docker (veja os avisos no passo 1 acima; nesse modo, sem
 Docker, não há como entrar na rede do destino).
 
+## Experimento de downtime (N migrações bem-sucedidas)
+
+`scripts/run_migration_experiment.py` repete a migração do MS2 até obter
+exatamente `N` sucessos e mede o downtime de cada um. Pré-requisitos: os mesmos
+da migração manual (origem, Floci-AZ e manager no ar, `aws` CLI e `docker` no
+host).
+
+```bash
+python3 scripts/run_migration_experiment.py 30                                # stop-and-migrate
+python3 scripts/run_migration_experiment.py 30 --mode pre-copy-replication
+```
+
+Cada tentativa:
+
+1. **Prepara o ambiente**: chama `POST /migrations/{id}/rollback` da tentativa
+   anterior e espera o estado inicial: `POST /ms2/api/process` responde
+   `provider: "aws"`, `localhost:8082/health` responde 200 e não existe
+   container `floci-az-ca-ms2*`/`floci-az-pg-ms2*`. O Floci apaga o container
+   do MS2 assim que o manager o para (a task vai para `STOPPED`), então o
+   rollback não consegue religá-lo; sem task `ms2` em execução, o script
+   recria a origem com `ecs run-task --task-definition ms2` (mesma imagem,
+   mesmo RDS, que a migração não altera). Se isso não acontecer em
+   `--prepare-timeout`, o experimento é **abortado** (código 2): medir a partir
+   de outro estado invalidaria a amostra.
+2. Descobre a task ECS (`--family ms2`) e inicia `POST /migrate/<modo>` com um
+   `migration_id` único por tentativa.
+3. Acompanha `GET /migrate/{id}/status` até `COMPLETED`/`FAILED` (limite de
+   `--attempt-timeout`).
+4. Só conta como sucesso se o status for `COMPLETED`, vier com
+   `downtime_seconds` e a rota pública responder `provider: "azure"`. Qualquer
+   outro resultado é falha: fica registrada e o experimento continua.
+
+Ao final, o MS2 volta à AWS (`--no-restore-at-end` para deixá-lo migrado) e o
+relatório mostra `N`, `K` (tentativas), `K - N` (falhas), o downtime de cada
+sucesso e média, mínimo, máximo, mediana e desvio padrão amostral. Falhas não
+entram nas estatísticas. Os resultados são gravados a cada tentativa em
+`experiments/<timestamp>/` (`attempts.csv`, `attempts.jsonl` com o status bruto,
+`summary.json`, `experiment.json` com os parâmetros). `Ctrl+C` interrompe
+e grava o resumo parcial. `--max-attempts` é uma trava opcional: sem ela, o
+experimento só termina com `N` sucessos.
+
 ## Testes
 
 ```bash

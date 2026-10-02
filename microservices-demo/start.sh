@@ -16,6 +16,7 @@ set -Eeuo pipefail
 #   ./start.sh ms1 gateway     # sobe uma seleção
 #   ./start.sh stop ms2        # para a task do ms2 (mantém o RDS)
 #   ./start.sh destroy ms2     # para a task e remove o RDS do ms2
+#   SEED_ROWS=100000 ./start.sh ms2   # popula o ms2_db antes de subir (seed-ms2.sh)
 # ============================================================
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -257,6 +258,11 @@ deploy_service() {
     "$ROOT_DIR/$dir"
 
   [ "$(has_db "$svc")" = "1" ] && ensure_rds "$svc"
+
+  # Popula o ms2_db antes da task subir, para o MS2 já iniciar "em uso"
+  if [ "$svc" = "ms2" ] && [ -n "${SEED_ROWS:-}" ]; then
+    "$ROOT_DIR/seed-ms2.sh"
+  fi
 
   register_and_run "$svc"
   wait_http "$svc"
